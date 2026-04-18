@@ -1,0 +1,1131 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+                 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* =========================================================
+   SKALA TAMPILAN (Chrome / Edge)
+   Mempertahankan ukuran visual ~setara zoom browser 75% saat Chrome disetel 100%.
+   --app-vh / --app-dvh mengkompensasi vh agar sidebar & kartu full-height setelah zoom html.
+   ========================================================= */
+:root {
+    --app-html-zoom: 0.75;
+    --app-vh: calc(100vh / var(--app-html-zoom));
+    --app-dvh: calc(100dvh / var(--app-html-zoom));
+}
+
+html {
+    zoom: var(--app-html-zoom);
+}
+
+@media print {
+    html {
+        zoom: 1;
+    }
+
+    :root {
+        --app-html-zoom: 1;
+    }
+}
+
+/* Halaman guest (login, forgot password, verifikasi email, reset password) — tinggi layar setelah html { zoom } */
+html.auth-page {
+    min-height: var(--app-dvh, var(--app-vh));
+}
+
+body.auth-page-body {
+    min-height: var(--app-dvh, var(--app-vh));
+    box-sizing: border-box;
+}
+
+/* =========================================================
+   FONT FAMILY MONTERRAT
+   ========================================================= */
+.font-montserrat {
+    font-family: 'Montserrat', sans-serif !important;
+}
+
+/* =========================================================
+   HEADER AVATAR
+   ========================================================= */
+/* Default (mobile) smallest */
+
+.header {
+    display: flex;
+    align-items: center !important;
+    height: 70px; /* samakan dengan header mobile */
+    
+}
+
+.header-avatar {
+    width: 36px;
+    height: 36px;
+    transition: .3s ease;
+}
+
+/* Tablet ≥576px */
+@media (min-width: 35px) {
+    .header-avatar {
+        width: 45px;
+        height: 45px;
+    }
+}
+
+/* Desktop ≥992px */
+@media (min-width: 70px) {
+    .header-avatar {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* Hover effect */
+.header-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: 0px 0px 8px rgba(0,0,0,0.15);
+}
+
+
+/* =========================================================
+   LOGO IMAGE (khusus header mobile)
+   ========================================================= */
+.logo-img {
+    height: auto;
+    width: 120px;            /* ukuran default saat desktop */
+    max-width: 100%;
+    transition: width 0.3s ease-in-out;  
+}
+
+/* Tablet */
+@media (max-width: 992px) {
+    .logo-img {
+        width: 120px;        /* mengecil smooth */
+    }
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+    .logo-img {
+        width: 110px;        /* minimum size yang aman */
+    }
+}
+
+/* Very small screens */
+@media (max-width: 400px) {
+    .logo-img {
+        width: 95px;         /* ukuran paling kecil */
+    }
+}
+
+
+
+/* =========================================================
+   LOGOUT BUTTON
+   ========================================================= */
+
+.logout-btn {
+    width: 48px;
+    height: 48px;
+    transition: 0.3s ease;
+}
+
+/* =========================================================
+   SEARCH CONTAINER
+   ========================================================= */
+
+.search-container {
+    max-width: 350px;
+    min-height: auto;
+    width: 100%;
+}
+
+@media (min-width: 992px) {
+    .search-container {
+        max-width: 500px;
+    }
+}
+
+/* =========================================================
+   SEARCH FORM (khusus header)
+   ========================================================= */
+.search-bar {
+    width: 100%;
+    max-width: 420px;
+    transition: max-width 0.3s ease-in-out;
+}
+form.header-search-form {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* RESPONSIVE BREAKPOINTS */
+
+/* Tablet */
+@media (max-width: 991px) {
+    .search-bar {
+        max-width: 350px;
+        max-height: 75px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 576px) {
+    .search-bar {
+        max-width: 100%;
+        max-height: 45px;
+    }
+}
+
+/* Input search */
+form.header-search-form input[type="search"] {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+}
+
+/* Search button */
+form.header-search-form button {
+    border: none;
+    background: transparent;
+    color: #7D7D7D;
+}
+
+/* =========================================================
+   SEARCH FORM COMPONENT
+   ========================================================= */
+/* SEARCH INPUT TEXT */
+.search-input {
+    flex-grow: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+
+    /* Ukuran font responsif (fluid typography) */
+    font-size: clamp(12px, 2.2vw, 16px);
+}
+
+/* PLACEHOLDER responsive */
+.search-input::placeholder {
+    font-size: clamp(12px, 2.1vw, 16px);
+    color: #999;
+}
+
+/* ICON SEARCH */
+.search-btn i {
+    /* Ukuran icon responsif */
+    font-size: clamp(14px, 2.5vw, 20px);
+    color: #7D7D7D;
+}
+
+/* SMOOTH TRANSITION */
+.search-input,
+.search-btn i {
+    transition: font-size 0.2s ease-in-out;
+}
+
+/* =========================================================
+   INLINE TABLE SEARCH (project + admin + user project index)
+   Ring fokus memeluk seluruh baris (ikon + input), bukan hanya input.
+   ========================================================= */
+form.search {
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+form.search:focus-within {
+    border-color: var(--bs-primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+form.search input.form-control:focus {
+    box-shadow: none !important;
+    outline: none;
+}
+
+form.search .btn:focus,
+form.search .btn:focus-visible {
+    box-shadow: none;
+    outline: none;
+}
+
+html[data-theme="dark"] form.search:focus-within {
+    border-color: #6faec9 !important;
+    box-shadow: 0 0 0 0.25rem rgba(111, 174, 201, 0.35);
+}
+
+/* Inline search (admin index, project index, dll.) — permukaan gelap selaras tombol filter */
+html[data-theme="dark"] form.search {
+    background-color: var(--dash-bg-elevated) !important;
+    border-color: #52525b !important;
+}
+
+html[data-theme="dark"] form.search .form-control {
+    background-color: transparent !important;
+    color: var(--dash-text) !important;
+}
+
+html[data-theme="dark"] form.search .form-control::placeholder {
+    color: #71717a !important;
+}
+
+html[data-theme="dark"] form.search .btn-link,
+html[data-theme="dark"] form.search .btn-link.text-secondary {
+    color: var(--dash-text-muted) !important;
+}
+
+html[data-theme="dark"] form.search .btn-link:hover {
+    color: var(--dash-text) !important;
+}
+
+/* Tombol filter bertema putih (btn-white) — disamakan dengan kartu / search di tema gelap */
+html[data-theme="dark"] .btn-white {
+    background-color: var(--dash-bg-elevated) !important;
+    border-color: #52525b !important;
+    color: var(--dash-text) !important;
+}
+
+html[data-theme="dark"] .btn-white:hover,
+html[data-theme="dark"] .btn-white:focus,
+html[data-theme="dark"] .btn-white.show {
+    background-color: #2d2d32 !important;
+    border-color: #71717a !important;
+    color: #fafafa !important;
+}
+
+.content-wrapper {
+    margin-top: 120px; /* tinggi header */
+    margin-left: 120px; /* lebar sidebar */
+    padding: 50px; 
+}
+
+.main-content {
+    margin-left: 250px; /* sama dengan width sidebar */
+    padding: 50px;
+    overflow-x: hidden;
+}
+.container,
+.row,
+.col,
+.card,
+table {
+    max-width: 100% !important;
+}
+
+/* =========================================================
+   EMPTY STATE (icons + text)
+   ========================================================= */
+.empty-state .d-block { text-align: center; }
+.empty-icon-i {
+    /* consistent icon size for empty states */
+    font-size: 36px !important;
+    line-height: 1;
+}
+.empty-text {
+    text-align: center;
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+/* =========================================================
+   MODAL — backdrop penuh layar + urutan z-index (setelah html zoom & main z-index:0)
+   Markup modal: @stack('modals') di akhir <body> (layouts/app), bukan di dalam <main>.
+   ========================================================= */
+.modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    min-width: 100%;
+    min-height: var(--app-dvh, var(--app-vh, 100vh)) !important;
+    z-index: 1055 !important;
+}
+
+.modal-backdrop.show {
+    /* Lebih ringan dari default Bootstrap (~0.5) — overlay tidak terlalu gelap */
+    opacity: 0.12 !important;
+}
+
+/* Dialog di atas backdrop (main .app-shell__main punya stacking context; modal dipindah ke @stack('modals')) */
+.modal {
+    z-index: 1060 !important;
+}
+
+/* =========================================================
+   THEME GLOBAL (localStorage + data-theme pada <html>)
+   ========================================================= */
+/* Logo: light = ukuran penuh seperti semula | dark = lebih kecil agar muat header */
+.app-logo-wrap {
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+html[data-theme="light"] .app-logo-wrap {
+    max-width: min(100%, 200px);
+}
+
+html[data-theme="dark"] .app-logo-wrap {
+    max-width: min(100%, 140px);
+}
+
+.app-logo-wrap .app-logo {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left center;
+    vertical-align: middle;
+}
+
+/* Mobile header (~70px): light mirip width 140px; dark tetap compact */
+.app-logo-wrap--mobile .app-logo-light {
+    max-height: 44px;
+    max-width: 140px;
+}
+
+.app-logo-wrap--mobile .app-logo-dark {
+    max-height: 28px;
+    max-width: 92px;
+}
+
+/* Desktop header (~80px) */
+.app-logo-wrap--desktop .app-logo-light {
+    max-height: 52px;
+    max-width: 160px;
+}
+
+.app-logo-wrap--desktop .app-logo-dark {
+    max-height: 36px;
+    max-width: 112px;
+}
+
+/* Offcanvas: light height 32; dark lebih kecil */
+.app-logo-wrap--sidebar .app-logo-light {
+    max-height: 32px;
+    max-width: 140px;
+}
+
+.app-logo-wrap--sidebar .app-logo-dark {
+    max-height: 24px;
+    max-width: 88px;
+}
+
+.app-logo-wrap .app-logo-dark {
+    display: none;
+}
+
+html[data-theme="dark"] .app-logo-wrap .app-logo-light {
+    display: none !important;
+}
+
+html[data-theme="dark"] .app-logo-wrap .app-logo-dark {
+    display: block !important;
+}
+
+html[data-theme="light"] body {
+    background-color: #fafafa;
+}
+
+html[data-theme="dark"] body {
+    background-color: #1a1b1e;
+}
+
+/* =========================================================
+   ELEGANT DARK MODE — seluruh app saat data-theme="dark"
+   ========================================================= */
+html[data-theme="dark"] {
+    --dash-bg-page: #1a1b1e;
+    --dash-bg-elevated: #25262b;
+    --dash-border: #3f3f46;
+    --dash-text: #f4f4f5;
+    --dash-text-muted: #a1a1aa;
+    --bg-sidebar: #25262b;
+    --border-color: #3f3f46;
+    --bg-sidebar-btn: #3f3f46;
+    --bg-sidebar-btn-active: #6faec9;
+    --text-muted: #e4e4e7;
+    /* Bootstrap 5 — supaya .card, .modal, .table, form ikut tema gelap */
+    --bs-body-bg: #1a1b1e;
+    --bs-body-color: #f4f4f5;
+    --bs-secondary-bg: #25262b;
+    --bs-tertiary-bg: #2d2d32;
+    --bs-emphasis-color: #fafafa;
+    --bs-secondary-color: #a1a1aa;
+    --bs-heading-color: #f4f4f5;
+    --bs-border-color: #3f3f46;
+    --bs-border-color-translucent: rgba(255, 255, 255, 0.12);
+    --bs-card-bg: #25262b;
+    --bs-card-cap-bg: rgba(255, 255, 255, 0.04);
+    --bs-card-border-color: #3f3f46;
+    --bs-modal-bg: #25262b;
+    --bs-modal-border-color: #3f3f46;
+    --bs-modal-header-border-color: #3f3f46;
+    --bs-modal-footer-border-color: #3f3f46;
+    --bs-dropdown-bg: #25262b;
+    --bs-dropdown-border-color: #3f3f46;
+    --bs-dropdown-link-color: #e4e4e7;
+    --bs-dropdown-link-hover-bg: #3f3f46;
+    --bs-pagination-bg: #25262b;
+    --bs-pagination-border-color: #3f3f46;
+    --bs-pagination-hover-bg: #3f3f46;
+    --bs-pagination-focus-bg: #3f3f46;
+    --bs-pagination-disabled-bg: #2d2d32;
+    --bs-pagination-disabled-color: #71717a;
+    --bs-table-bg: transparent;
+    --bs-table-color: #f4f4f5;
+    --bs-table-border-color: #3f3f46;
+    --bs-table-striped-bg: rgba(255, 255, 255, 0.04);
+    --bs-table-hover-bg: rgba(255, 255, 255, 0.07);
+    --bs-table-active-bg: rgba(255, 255, 255, 0.1);
+    --bs-form-control-bg: #2d2d32;
+    --bs-form-control-color: #f4f4f5;
+    --bs-form-control-border-color: #52525b;
+    --bs-form-select-bg: #2d2d32;
+    --bs-form-select-color: #f4f4f5;
+    --bs-form-select-border-color: #52525b;
+    --bs-input-group-addon-bg: #3f3f46;
+    --bs-input-group-addon-border-color: #52525b;
+    --bs-input-group-addon-color: #e4e4e7;
+}
+
+html[data-theme="dark"] header.bg-white {
+    background-color: var(--dash-bg-elevated) !important;
+    border-color: var(--dash-border) !important;
+}
+
+html[data-theme="dark"] header .header-user-name {
+    color: var(--dash-text) !important;
+}
+
+html[data-theme="dark"] header .header-user-role {
+    color: var(--dash-text-muted) !important;
+}
+
+html[data-theme="dark"] header .header-search-wrapper,
+html[data-theme="dark"] .header-search-wrapper {
+    background-color: #2d2d32 !important;
+    border-color: #52525b !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="dark"] header .header-search-wrapper input.form-control,
+html[data-theme="dark"] .header-search-wrapper input {
+    color: var(--dash-text) !important;
+}
+
+html[data-theme="dark"] header .header-search-wrapper input::placeholder {
+    color: #71717a !important;
+}
+
+html[data-theme="dark"] .header-search-btn i,
+html[data-theme="dark"] header .header-search-btn i {
+    color: #a5f3fc !important;
+}
+
+html[data-theme="dark"] .logout-btn {
+    background: #3f3f46 !important;
+    color: #e4e4e7 !important;
+}
+
+html[data-theme="dark"] .offcanvas-header.border-bottom {
+    background-color: var(--dash-bg-elevated);
+    border-color: var(--dash-border) !important;
+}
+
+html[data-theme="dark"] .offcanvas-body.sidebar-mobile {
+    background-color: var(--dash-bg-page);
+}
+
+html[data-theme="dark"] .offcanvas-body.sidebar-mobile a {
+    color: var(--dash-text-muted);
+}
+
+html[data-theme="dark"] .offcanvas-body.sidebar-mobile a.active {
+    color: #fff;
+}
+
+html[data-theme="dark"] .btn-close {
+    filter: invert(1);
+    opacity: 0.7;
+}
+
+/* =========================================================
+   DARK MODE — kartu, modal, form, tabel (global)
+   Kartu notifikasi dashboard (.dashboard-notify-card) dikecualikan;
+   tile putih di dalamnya tetap terang (lihat reset di bawah).
+   ========================================================= */
+html[data-theme="dark"] .card:not(.dashboard-notify-card) {
+    background-color: var(--bs-card-bg);
+    border-color: var(--bs-card-border-color);
+    color: var(--dash-text);
+}
+
+html[data-theme="dark"] .card:not(.dashboard-notify-card) .card-header,
+html[data-theme="dark"] .card:not(.dashboard-notify-card) .card-footer {
+    background-color: var(--bs-card-cap-bg);
+    border-color: var(--dash-border);
+    color: var(--dash-text);
+}
+
+html[data-theme="dark"] .modal-content {
+    background-color: var(--bs-modal-bg);
+    border-color: var(--bs-modal-border-color);
+    color: var(--dash-text);
+}
+
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .modal-footer {
+    border-color: var(--bs-modal-header-border-color);
+}
+
+html[data-theme="dark"] .list-group-item {
+    background-color: var(--dash-bg-elevated);
+    border-color: var(--dash-border);
+    color: var(--dash-text);
+}
+
+/*
+ * Project create/edit: nested "select staff" division cards (JS-built; was Bootstrap .bg-light).
+ */
+.project-staff-select-card {
+    background-color: #f8f9fa;
+    border-color: var(--bs-border-color, #dee2e6) !important;
+}
+
+html[data-theme="dark"] .project-staff-select-card {
+    background-color: var(--dash-bg-elevated);
+    border-color: var(--dash-border) !important;
+    color: var(--dash-text);
+}
+
+html[data-theme="dark"] .project-staff-select-card .btn-outline-secondary {
+    color: var(--dash-text-muted);
+    border-color: var(--dash-border);
+}
+
+html[data-theme="dark"] .project-staff-select-card .btn-outline-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+    border-color: #71717a;
+    color: var(--dash-text);
+}
+
+html[data-theme="dark"] .project-staff-select-card .btn-outline-danger {
+    color: #fca5a5;
+    border-color: rgba(248, 113, 113, 0.5);
+}
+
+html[data-theme="dark"] .project-staff-select-card .btn-outline-danger:hover {
+    background-color: rgba(248, 113, 113, 0.12);
+    color: #fecaca;
+    border-color: #f87171;
+}
+
+html[data-theme="dark"] .project-staff-select-card .btn-link.text-secondary {
+    color: var(--dash-text-muted) !important;
+}
+
+html[data-theme="dark"] .table {
+    color: var(--dash-text);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--dash-border);
+}
+
+html[data-theme="dark"] .table > :not(caption) > * > * {
+    border-bottom-color: var(--dash-border);
+}
+
+html[data-theme="dark"] .form-control,
+html[data-theme="dark"] .form-select {
+    background-color: var(--bs-form-control-bg) !important;
+    border-color: var(--bs-form-control-border-color) !important;
+    color: var(--bs-form-control-color) !important;
+}
+
+/* Kalahkan .bg-light + stylesheet eksternal (mis. profile) pada input baca-saja / duration */
+html[data-theme="dark"] .form-control.bg-light,
+html[data-theme="dark"] textarea.form-control.bg-light {
+    background-color: var(--bs-form-control-bg) !important;
+    color: var(--bs-form-control-color) !important;
+    border-color: var(--bs-form-control-border-color) !important;
+}
+
+html[data-theme="dark"] .form-control[readonly],
+html[data-theme="dark"] textarea.form-control[readonly],
+html[data-theme="dark"] .form-control:read-only {
+    background-color: var(--bs-form-control-bg) !important;
+    color: var(--bs-form-control-color) !important;
+    border-color: var(--bs-form-control-border-color) !important;
+}
+
+html[data-theme="dark"] .form-control::placeholder {
+    color: #71717a;
+}
+
+html[data-theme="dark"] .form-control:focus,
+html[data-theme="dark"] .form-select:focus {
+    background-color: var(--bs-form-control-bg) !important;
+    border-color: #6faec9;
+    color: var(--bs-form-control-color) !important;
+    box-shadow: 0 0 0 0.2rem rgba(111, 174, 201, 0.25);
+}
+
+html[data-theme="dark"] .form-control:disabled,
+html[data-theme="dark"] .form-select:disabled {
+    background-color: #2d2d32 !important;
+    opacity: 0.65;
+}
+
+html[data-theme="dark"] .input-group-text {
+    background-color: var(--bs-input-group-addon-bg);
+    border-color: var(--bs-input-group-addon-border-color);
+    color: var(--bs-input-group-addon-color);
+}
+
+html[data-theme="dark"] .form-label,
+html[data-theme="dark"] .col-form-label {
+    color: var(--dash-text);
+}
+
+html[data-theme="dark"] .form-text {
+    color: var(--dash-text-muted) !important;
+}
+
+html[data-theme="dark"] .form-check-input {
+    background-color: #3f3f46;
+    border-color: #71717a;
+}
+
+html[data-theme="dark"] .form-check-input:checked {
+    background-color: #6faec9;
+    border-color: #6faec9;
+}
+
+html[data-theme="dark"] .form-select {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23a1a1aa' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* Flatpickr (Birth / tanggal di profil & admin show) — popup & hari */
+html[data-theme="dark"] .flatpickr-calendar {
+    background: var(--dash-bg-elevated);
+    border-color: var(--dash-border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+}
+
+html[data-theme="dark"] .flatpickr-months .flatpickr-month {
+    background: var(--dash-bg-elevated);
+    color: var(--dash-text);
+    fill: var(--dash-text);
+}
+
+html[data-theme="dark"] .flatpickr-current-month .flatpickr-monthDropdown-months,
+html[data-theme="dark"] .flatpickr-current-month .numInputWrapper input {
+    background: var(--dash-bg-elevated);
+    color: var(--dash-text);
+    border-color: var(--dash-border);
+}
+
+html[data-theme="dark"] .flatpickr-weekdays {
+    background: var(--dash-bg-elevated);
+}
+
+html[data-theme="dark"] span.flatpickr-weekday {
+    color: var(--dash-text-muted);
+}
+
+html[data-theme="dark"] .flatpickr-day {
+    color: var(--dash-text);
+    border-color: var(--dash-border);
+}
+
+html[data-theme="dark"] .flatpickr-day:hover,
+html[data-theme="dark"] .flatpickr-day:focus {
+    background: #3f3f46;
+    border-color: #52525b;
+    color: #fff;
+}
+
+html[data-theme="dark"] .flatpickr-day.selected,
+html[data-theme="dark"] .flatpickr-day.startRange,
+html[data-theme="dark"] .flatpickr-day.endRange {
+    background: #6faec9;
+    border-color: #6faec9;
+    color: #0c0c0d;
+}
+
+html[data-theme="dark"] .flatpickr-day.flatpickr-disabled,
+html[data-theme="dark"] .flatpickr-day.prevMonthDay,
+html[data-theme="dark"] .flatpickr-day.nextMonthDay {
+    color: #71717a;
+}
+
+html[data-theme="dark"] .flatpickr-time input {
+    background: #2d2d32;
+    color: var(--dash-text);
+    border-color: var(--dash-border);
+}
+
+html[data-theme="dark"] .dropdown-menu {
+    background-color: var(--bs-dropdown-bg);
+    border-color: var(--bs-dropdown-border-color);
+}
+
+html[data-theme="dark"] .dropdown-item {
+    color: var(--bs-dropdown-link-color);
+}
+
+html[data-theme="dark"] .dropdown-item:hover,
+html[data-theme="dark"] .dropdown-item:focus {
+    background-color: var(--bs-dropdown-link-hover-bg);
+    color: #fff;
+}
+
+html[data-theme="dark"] .dropdown-divider {
+    border-top-color: var(--dash-border);
+}
+
+html[data-theme="dark"] .pagination .page-link {
+    background-color: var(--bs-pagination-bg);
+    border-color: var(--bs-pagination-border-color);
+    color: var(--dash-text);
+}
+
+html[data-theme="dark"] .pagination .page-link:hover {
+    background-color: var(--bs-pagination-hover-bg);
+    color: #fff;
+}
+
+html[data-theme="dark"] .pagination .page-item.active .page-link {
+    background-color: #6faec9;
+    border-color: #6faec9;
+    color: #0c0c0d;
+}
+
+html[data-theme="dark"] .pagination .page-item.disabled .page-link {
+    background-color: var(--bs-pagination-disabled-bg);
+    color: var(--bs-pagination-disabled-color);
+}
+
+/* bg-white di area konten umum → permukaan gelap (badge putih dikecualikan) */
+html[data-theme="dark"] .bg-white:not(.badge) {
+    background-color: var(--dash-bg-elevated) !important;
+    color: var(--dash-text);
+}
+
+html[data-theme="dark"] .badge.bg-white {
+    background-color: #f4f4f5 !important;
+    color: #212529 !important;
+}
+
+/*
+ * Panel notifikasi dashboard (biru / hijau / orange): isi kartu task / project / permission — tema gelap.
+ * Badge putih di header (counter) dikecualikan dengan :not(.badge).
+ */
+html[data-theme="dark"] .dashboard-notify-card .bg-white:not(.badge),
+html[data-theme="dark"] .dashboard-notify-scroll .bg-white:not(.badge) {
+    background-color: rgba(24, 24, 27, 0.82) !important;
+    color: #f4f4f5 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+html[data-theme="dark"] .dashboard-notify-card .text-black {
+    color: #f4f4f5 !important;
+}
+
+html[data-theme="dark"] .dashboard-notify-card .text-secondary {
+    color: #d4d4d8 !important;
+}
+
+html[data-theme="dark"] .dashboard-notify-card .text-muted {
+    color: #a1a1aa !important;
+}
+
+html[data-theme="dark"] .dashboard-notify-card a.text-reset {
+    color: inherit;
+}
+
+html[data-theme="dark"] .dashboard-notify-card a.text-reset:hover .bg-white:not(.badge),
+html[data-theme="dark"] .dashboard-notify-card a.text-reset:focus-visible .bg-white:not(.badge) {
+    background-color: rgba(39, 39, 42, 0.92) !important;
+    border-color: rgba(255, 255, 255, 0.22) !important;
+}
+
+html[data-theme="dark"] .empty-text:not(.dash-notify-empty) {
+    color: var(--dash-text-muted);
+}
+
+/* Submit gelap + border abu (#E0E0E0CE) seperti Cancel — admin create, task modal, profile edit, dll. */
+.administration-create-submit,
+.admin-create-account-submit,
+.task-modal-submit,
+.profile-edit-submit {
+    border: 1px solid #e0e0e0ce !important;
+}
+
+.administration-create-submit:hover,
+.admin-create-account-submit:hover,
+.task-modal-submit:hover,
+.profile-edit-submit:hover {
+    border-color: #e0e0e0ce !important;
+}
+
+/* =========================================================
+   POP-UP PROFIL (hover / klik / mouseleave)
+   ========================================================= */
+.profile-popup-host {
+    position: relative;
+}
+
+.profile-popup-panel {
+    display: none;
+    position: absolute;
+    z-index: 1080;
+    right: 0;
+    top: calc(100% + 8px);
+    min-width: 240px;
+    padding: 1rem;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.profile-popup-host.is-open .profile-popup-panel {
+    display: block;
+}
+
+.profile-popup-panel .profile-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #111827;
+}
+
+.profile-popup-panel .profile-email {
+    font-size: 0.8rem;
+    color: #6b7280;
+}
+
+.profile-theme-heading {
+    font-size: 0.8rem;
+    color: #111827;
+}
+
+html[data-theme="dark"] .profile-theme-heading {
+    color: #f4f4f5;
+}
+
+.profile-theme-side-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+.profile-theme-icon {
+    font-size: 1rem;
+    vertical-align: middle;
+}
+
+html[data-theme="light"] .profile-popup-panel .theme-icon-dark {
+    display: none !important;
+}
+
+html[data-theme="dark"] .profile-popup-panel .theme-icon-light {
+    display: none !important;
+}
+
+html[data-theme="dark"] .profile-popup-panel .profile-theme-icon {
+    color: #e4e4e7;
+}
+
+html[data-theme="light"] .profile-popup-panel .profile-theme-icon {
+    color: #374151;
+}
+
+html[data-theme="dark"] .profile-popup-panel {
+    background: #25262b;
+    border: 1px solid #3f3f46;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="dark"] .profile-popup-panel .profile-name {
+    color: #f4f4f5 !important;
+}
+
+html[data-theme="dark"] .profile-popup-panel .profile-email {
+    color: #a1a1aa !important;
+}
+
+html[data-theme="dark"] .profile-popup-avatar-fallback {
+    background: #3f3f46 !important;
+    color: #f4f4f5 !important;
+}
+
+html[data-theme="light"] .profile-popup-avatar-fallback {
+    background: #dcdcdc !important;
+    color: #374151 !important;
+}
+
+html[data-theme="dark"] .profile-popup-panel .form-check-input {
+    background-color: #3f3f46;
+    border-color: #71717a;
+}
+
+html[data-theme="dark"] .profile-popup-panel .form-check-input:checked {
+    background-color: #6faec9;
+    border-color: #6faec9;
+}
+
+html[data-theme="dark"] .profile-btn-edit {
+    background: transparent !important;
+    border: 1px solid #52525b !important;
+    color: #e4e4e7 !important;
+}
+
+html[data-theme="dark"] .profile-btn-edit:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #fafafa !important;
+}
+
+html[data-theme="dark"] .profile-btn-logout {
+    background: transparent !important;
+    border: 1px solid #52525b !important;
+    color: #e4e4e7 !important;
+}
+
+html[data-theme="dark"] .profile-btn-logout:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: #fafafa !important;
+}
+
+/* =========================================================
+   APP SHELL — header & sidebar tetap di viewport saat scroll
+   ========================================================= */
+:root {
+    --app-header-height: 70px;
+    /* Lebar kolom sidebar (padding 15+15 + ikon 50 + border) */
+    --app-sidebar-width: 82px;
+}
+
+@media (min-width: 992px) {
+    :root {
+        --app-header-height: 80px;
+    }
+}
+
+.app-shell {
+    min-height: var(--app-vh);
+    display: flex;
+    flex-direction: column;
+}
+
+.app-shell__header {
+    position: sticky;
+    top: 0;
+    z-index: 1040;
+    flex-shrink: 0;
+}
+
+.app-shell__header header.bg-white {
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+}
+
+html[data-theme="dark"] .app-shell__header header.bg-white {
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+
+.app-shell__body {
+    flex: 1 1 auto;
+}
+
+/* Di atas konten utama agar label sidebar (::after) tidak tertutup kartu; tetap di bawah header (1040) */
+.app-shell__sidebar {
+    z-index: 1041;
+}
+
+/*
+ * Desktop: sidebar fixed — tidak ikut scroll halaman, garis kanan sampai bawah viewport.
+ * Konten utama diberi margin-left agar tidak tertutup sidebar.
+ */
+@media (min-width: 992px) {
+    .app-shell__sidebar {
+        position: fixed;
+        left: 0;
+        top: var(--app-header-height);
+        width: var(--app-sidebar-width);
+        height: calc(var(--app-vh) - var(--app-header-height));
+        /*
+         * Hanya visible: jika overflow-y: auto dipasangkan dengan overflow-x: visible,
+         * perhitungan overflow memaksa sumbu X menjadi auto sehingga label sidebar terpotong.
+         */
+        overflow: visible;
+    }
+
+    .app-shell__sidebar > .sidebar-rect-wrapper {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .app-shell__main {
+        margin-left: var(--app-sidebar-width);
+        position: relative;
+        z-index: 0; /* konten di bawah sidebar (1041) agar label tidak “masuk” kartu */
+    }
+}
+
+/* =========================================================
+   Bilah scroll disembunyikan; scroll tetap (wheel / touch / drag)
+   ========================================================= */
+.admin-index-table-scroll,
+.permission-list-scroll,
+.project-index-table-scroll,
+.dashboard-left-tab-panel,
+.dashboard-notify-scroll,
+.tasks-board-page .overflow-scroll-container,
+.tasks-board-columns-wrap {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.admin-index-table-scroll::-webkit-scrollbar,
+.permission-list-scroll::-webkit-scrollbar,
+.project-index-table-scroll::-webkit-scrollbar,
+.dashboard-left-tab-panel::-webkit-scrollbar,
+.dashboard-notify-scroll::-webkit-scrollbar,
+.tasks-board-page .overflow-scroll-container::-webkit-scrollbar,
+.tasks-board-columns-wrap::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+
+/* =========================================================
+   Task: kapsul level & status — sama seperti Status/Action permission (flat, tanpa bayangan)
+   ========================================================= */
+span.task-meta-pill.btn {
+    pointer-events: none;
+    cursor: default;
+    font-weight: 400 !important;
+    line-height: 1.5 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    min-width: 5rem;
+    text-align: center;
+    border: none !important;
+    vertical-align: middle;
+}
+
+html[data-theme="dark"] span.task-meta-pill.btn {
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+

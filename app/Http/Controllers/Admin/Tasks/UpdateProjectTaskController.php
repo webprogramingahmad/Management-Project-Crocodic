@@ -1,0 +1,39 @@
+<?php
+
+namespace App\Http\Controllers\Admin\Tasks;
+
+use App\Http\Controllers\Controller;
+use App\Models\Project;
+use App\Models\Task;
+use Illuminate\Http\Request;
+use App\Support\StatusSdmManager;
+
+class UpdateProjectTaskController extends Controller
+{
+    /**
+     * Handle the incoming request.
+     */
+    public function __invoke(Request $request, $id)
+    {
+        $project = Project::findOrFail($id);
+        $task = Task::where('id_project', $project->id)->findOrFail($request->id);
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'id_difficulty' => 'required|uuid|exists:task_difficulties,id',
+            'description' => 'nullable|string|max:5000',
+        ]);
+
+        $validated['description'] = ($validated['description'] ?? '') !== ''
+            ? trim((string) $validated['description'])
+            : null;
+
+        $task->update($validated);
+
+        if ($task->user) {
+            StatusSdmManager::syncForUser($task->user);
+        }
+
+        return redirect()->route('executive.project.tasks.index', $project->id)->with('success', 'Task updated successfully.');
+    }
+}

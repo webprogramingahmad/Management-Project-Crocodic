@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
+
+class Task extends Model
+{
+    use HasFactory, Notifiable;
+
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                $model->{$model->getKeyName()} = (string) Str::uuid();
+            }
+        });
+    }
+
+    protected $fillable = [
+        'name',
+        'id_user',
+        'id_project',
+        'description',
+        'id_status',
+        'id_difficulty',
+        'created_by',
+        'running_started_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'running_started_at' => 'datetime',
+        ];
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo(Project::class, 'id_project');
+    }
+
+    public function difficulty()
+    {
+        return $this->belongsTo(TaskDifficulty::class, 'id_difficulty');
+    }
+
+    public function status()
+    {
+        return $this->belongsTo(StatusTask::class, 'id_status', 'id', 'status_tasks');
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Task difficulty "Stand By" hanya memicu status SDM; tidak ditampilkan di board / dashboard / notifikasi.
+     */
+    public function scopeExcludingStandByDifficulty(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('difficulty', function ($q) {
+            $q->where('difficulty', 'Stand By');
+        });
+    }
+}
