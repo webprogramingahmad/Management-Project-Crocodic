@@ -51,21 +51,21 @@ DB_PASSWORD=</code></pre>
     <tbody>
         <tr>
             <td>
-                <span class="badge bg-danger">Admin</span>
+                <span class="badge bg-danger">executive</span>
             </td>
             <td>crocodic1@gmail.com</td>
             <td><code>crocodic123</code></td>
         </tr>
         <tr>
             <td>
-                <span class="badge bg-primary">Project Director</span>
+                <span class="badge bg-primary">Director</span>
             </td>
             <td>crocodic2@gmail.com</td>
             <td><code>crocodic123</code></td>
         </tr>
         <tr>
             <td>
-                <span class="badge bg-success">User</span>
+                <span class="badge bg-success">staff</span>
             </td>
             <td>crocodic3@gmail.com</td>
             <td><code>crocodic123</code></td>
