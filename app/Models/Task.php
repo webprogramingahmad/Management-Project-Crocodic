@@ -35,12 +35,17 @@ class Task extends Model
         'id_difficulty',
         'created_by',
         'running_started_at',
+        'running_review_at',
+        'revision_deadline_at',
+        'revision_hours',
     ];
 
     protected function casts(): array
     {
         return [
             'running_started_at' => 'datetime',
+            'running_review_at' => 'datetime',
+            'revision_deadline_at' => 'datetime',
         ];
     }
 

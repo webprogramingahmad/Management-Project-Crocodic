@@ -918,7 +918,7 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
         <div class="col-lg-8 dashboard-left-col">
             <div class="card dashboard-left-card">
                 <div class="card-body dashboard-left-card-body">
-                    @if ($role === 'staff' || $role === 'director')
+                    @if (false && ($role === 'staff' || $role === 'director'))
                         <div class="tab-btns dashboard-left-tab-btns mb-4">
                             <button type="button" class="btn btn-custom"
                                 data-target="#tab-project">Project</button>
@@ -1615,6 +1615,60 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                     </p>
                                                     <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0 mt-auto"
                                                         style="background-color:#7DB546;color:#fff;min-width:auto;line-height:1.3;">Completed</span>
+                                                </div>
+                                            </a>
+                                        @elseif ($note->kind === 'task_review')
+                                            @php
+                                                $task = $note->task;
+                                                $taskRoute = route('director.tasks.index', ['project_id' => $task->id_project]);
+                                            @endphp
+                                            <a href="{{ $taskRoute }}"
+                                                class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
+                                                <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
+                                                    <p class="fw-semibold small mb-1 text-truncate" title="{{ ucwords($task->name ?? '-') }}">
+                                                        {{ ucwords($task->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-secondary mb-0 text-break" style="line-height:1.35;">
+                                                        {{ ucwords($task->project?->name ?? 'Stand By') }}
+                                                    </p>
+                                                    <p class="small text-secondary mb-0 text-break" style="line-height:1.35;">
+                                                        {{ ucwords($task->user?->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-muted mb-2 mt-1" style="line-height:1.35;">
+                                                        {{ ($task->running_review_at ?? $task->updated_at)?->format('d/m/Y H:i') }}
+                                                    </p>
+                                                    <div class="d-flex gap-1 flex-wrap align-items-center mt-auto">
+                                                        <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
+                                                            style="background-color:#6FAEC9;color:#fff;min-width:auto;line-height:1.3;">Review</span>
+                                                        <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
+                                                            style="background-color:#FFB42E;color:#fff;min-width:auto;line-height:1.3;">Pending</span>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        @elseif ($note->kind === 'task_revision')
+                                            @php
+                                                $task = $note->task;
+                                                $taskRoute = route('staff.tasks.index', ['project_id' => $task->id_project]);
+                                            @endphp
+                                            <a href="{{ $taskRoute }}"
+                                                class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
+                                                <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
+                                                    <p class="fw-semibold small mb-1 text-truncate" title="{{ ucwords($task->name ?? '-') }}">
+                                                        {{ ucwords($task->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-secondary mb-0 text-break" style="line-height:1.35;">
+                                                        {{ ucwords($task->project?->name ?? 'Stand By') }}
+                                                    </p>
+                                                    <p class="small text-secondary mb-0 text-break" style="line-height:1.35;">
+                                                        {{ ucwords($task->user?->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-muted mb-2 mt-1" style="line-height:1.35;">
+                                                        {{ $task->updated_at?->format('d/m/Y H:i') }}
+                                                    </p>
+                                                    <div class="d-flex gap-1 flex-wrap align-items-center mt-auto">
+                                                        <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
+                                                            style="background-color:#C2410C;color:#fff;min-width:auto;line-height:1.3;">Revision</span>
+                                                    </div>
                                                 </div>
                                             </a>
                                         @endif

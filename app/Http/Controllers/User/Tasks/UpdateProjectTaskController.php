@@ -8,6 +8,8 @@ use App\Models\Task;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Support\StatusSdmManager;
+use App\Support\TaskBoardAccess;
+use App\Support\TaskRunningTimer;
 
 class UpdateProjectTaskController extends Controller
 {
@@ -21,6 +23,10 @@ class UpdateProjectTaskController extends Controller
         abort_unless($project->sdms()->where('users.id', Auth::id())->exists(), 403);
 
         $task = Task::where('id_project', $project->id)->findOrFail($request->id);
+
+        TaskBoardAccess::assertCanActOnTaskForBoard(Auth::user(), $task);
+        $task->loadMissing('status');
+        abort_if(TaskRunningTimer::isReviewStatus($task->status), 403);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

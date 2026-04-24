@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Tasks;
 use App\Http\Controllers\Controller;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Support\StatusSdmManager;
 
 class UpdateTaskController extends Controller
@@ -14,6 +15,8 @@ class UpdateTaskController extends Controller
      */
     public function __invoke(Request $request)
     {
+        abort_if(Auth::user()->role?->role === 'executive', 403);
+
         $task = Task::findOrFail($request->id);
 
         $validated = $request->validate([

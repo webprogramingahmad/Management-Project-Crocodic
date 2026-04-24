@@ -18,7 +18,7 @@ class StatusSdmManager
      */
     private static function activeWorkTaskStatuses(): array
     {
-        return ['To Do', 'To do', 'In progress', 'Review'];
+        return ['To Do', 'To do', 'In progress', 'Review', 'Revision'];
     }
 
     /**
@@ -89,21 +89,6 @@ class StatusSdmManager
 
         $standbyDifficultyId = TaskDifficulty::query()->where('difficulty', 'Stand By')->value('id');
 
-        $hasStandbyTask = $standbyDifficultyId
-            && Task::query()
-                ->where('id_user', $user->id)
-                ->where('id_difficulty', $standbyDifficultyId)
-                ->whereHas('status', function ($q) {
-                    $q->where('status', '!=', 'Complete');
-                })
-                ->exists();
-
-        if ($hasStandbyTask) {
-            self::applyActivityStatus($user, 'Stand By');
-
-            return;
-        }
-
         $workTasksQuery = Task::query()->where('id_user', $user->id);
         if ($standbyDifficultyId) {
             $workTasksQuery->where('id_difficulty', '!=', $standbyDifficultyId);
@@ -117,6 +102,25 @@ class StatusSdmManager
 
         if ($hasActiveWorkTask) {
             self::applyActivityStatus($user, 'Ready');
+
+            return;
+        }
+
+        // Stand By bersifat harian: hanya task Stand By yang dibuat hari ini
+        // yang boleh mengubah activity status ke "Stand By".
+        // Jika user sudah punya task kerja aktif, status harus tetap "Ready" (lihat return di atas).
+        $hasStandbyTask = $standbyDifficultyId
+            && Task::query()
+                ->where('id_user', $user->id)
+                ->where('id_difficulty', $standbyDifficultyId)
+                ->whereDate('created_at', $today)
+                ->whereHas('status', function ($q) {
+                    $q->where('status', '!=', 'Complete');
+                })
+                ->exists();
+
+        if ($hasStandbyTask) {
+            self::applyActivityStatus($user, 'Stand By');
 
             return;
         }

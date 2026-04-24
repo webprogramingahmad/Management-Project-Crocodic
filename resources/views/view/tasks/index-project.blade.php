@@ -32,12 +32,36 @@
         .tasks-board-columns-wrap {
             flex: 1 1 auto;
             min-height: 0;
-            overflow: auto;
+            overflow-x: hidden;
+            overflow-y: auto;
             -webkit-overflow-scrolling: touch;
         }
 
         .tasks-board-columns-inner {
             min-height: 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            container-type: inline-size;
+            container-name: taskboard;
+            --kb-gap: 0.5rem;
+        }
+
+        .tasks-board-row.tasks-board-row--kanban {
+            flex-wrap: nowrap;
+            gap: var(--kb-gap);
+            min-width: 100%;
+            width: max(
+                100%,
+                calc(5 * (100cqw - 3 * var(--kb-gap)) / 4 + 4 * var(--kb-gap))
+            );
+        }
+
+        .tasks-board-col.tasks-board-col--kanban {
+            flex: 0 0 calc((100cqw - 3 * var(--kb-gap)) / 4);
+            width: calc((100cqw - 3 * var(--kb-gap)) / 4);
+            min-width: calc((100cqw - 3 * var(--kb-gap)) / 4);
+            max-width: calc((100cqw - 3 * var(--kb-gap)) / 4);
         }
 
         @media (min-width: 992px) {
@@ -172,9 +196,9 @@
 
         <div class="tasks-board-columns-wrap">
             <div class="tasks-board-columns-inner container-fluid py-1 px-1 gx-0">
-            <div class="row g-1 g-md-2 g-lg-3 tasks-board-row">
+            <div class="row tasks-board-row tasks-board-row--kanban gx-0 pb-1 flex-nowrap mx-0">
                 {{-- To do --}}
-                <div class="col-12 col-md-6 col-lg-3 tasks-board-col">
+                <div class="col-auto tasks-board-col tasks-board-col--kanban">
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header bg-danger rounded-top" style="height: 10px;"></div>
                         <div class="tasks-board-card-body p-3">
@@ -190,7 +214,7 @@
                     </div>
                 </div>
                 {{-- In progress --}}
-                <div class="col-12 col-md-6 col-lg-3 tasks-board-col">
+                <div class="col-auto tasks-board-col tasks-board-col--kanban">
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header rounded-top" style="height: 10px; background: #FFB42E;"></div>
                         <div class="tasks-board-card-body p-3">
@@ -206,7 +230,7 @@
                     </div>
                 </div>
                 {{-- Review --}}
-                <div class="col-12 col-md-6 col-lg-3 tasks-board-col">
+                <div class="col-auto tasks-board-col tasks-board-col--kanban">
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header rounded-top" style="height: 10px; background: #6FAEC9"></div>
                         <div class="tasks-board-card-body p-3">
@@ -221,8 +245,26 @@
                         </div>
                     </div>
                 </div>
-                {{-- Complate --}}
-                <div class="col-12 col-md-6 col-lg-3 tasks-board-col">
+                @if ($statusRevision)
+                {{-- Revision --}}
+                <div class="col-auto tasks-board-col tasks-board-col--kanban">
+                    <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
+                        <div class="task-header rounded-top" style="height: 10px; background: #C2410C;"></div>
+                        <div class="tasks-board-card-body p-3">
+                            <h5 class="card-label mb-2">Revision</h5>
+                            <div class="overflow-scroll-container" data-status="{{ $statusRevision->id }}">
+                                @foreach ($taskRevision as $task)
+                                    <div class="border rounded-3 p-3 mb-2" data-id="{{ $task->id }}">
+                                        @include('view.tasks.partials.tasks.card', ['task' => $task])
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
+                {{-- Complete --}}
+                <div class="col-auto tasks-board-col tasks-board-col--kanban">
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header rounded-top" style="height: 10px; background: #7DB546;"></div>
                         <div class="tasks-board-card-body p-3">
@@ -247,6 +289,10 @@
     <div class="modal fade" id="detail-task" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
         @include('view.tasks.partials.tasks.modal-detail')
     </div>
+
+    @if ($role === 'director')
+        @include('view.tasks.partials.tasks.modal-review-decision')
+    @endif
 
     @if (!empty($projectAllowsTaskCreation))
         @if ($role !== 'executive')
@@ -273,44 +319,78 @@
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     <script>
-        document.querySelectorAll(".overflow-scroll-container").forEach(column => {
-            new Sortable(column, {
-                group: "tasks",
-                animation: 150,
-                onAdd: function (evt) {
-                    let taskId = evt.item.dataset.id;
-                    let newStatus = evt.to.dataset.status;
-
-                    let url = @json($taskStatusUpdateUrlTemplate).replace('__TASK_ID__', taskId);
-
-                    fetch(url, {
-                        method: "POST",
-                        headers: {
-                            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-                            "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                            id_status: newStatus
-                        }),
-                    })
-                        .then(res => res.json())
-                        .then(data => {
-                            if (!data.success) {
-                                alert("Gagal update status");
-                                return;
-                            }
-                            if (typeof window.refreshTaskRunningTimerAfterStatus === "function") {
-                                window.refreshTaskRunningTimerAfterStatus(
-                                    evt.item,
-                                    data.deadline_iso || null,
-                                    !!data.show_timer
-                                );
-                            }
+        window.__tasksBoardSortable = {
+            role: @json($role),
+            reviewId: @json($statusReview?->id),
+            completeId: @json($statusComplete?->id),
+            revisionId: @json($statusRevision?->id),
+        };
+        @if ($role === 'director')
+        window.REVIEW_DECISION_URL_TEMPLATE = @json(route('director.task.reviewDecision', ['id' => '__TASK_ID__']));
+        @endif
+    </script>
+    <script>
+        (function () {
+            var cfg = window.__tasksBoardSortable || {};
+            if (cfg.role === "executive") {
+                return;
+            }
+            document.querySelectorAll(".overflow-scroll-container").forEach(function (column) {
+                new Sortable(column, {
+                    group: "tasks",
+                    animation: 150,
+                    onMove: function (evt) {
+                        var to = evt.to.getAttribute("data-status");
+                        var from = evt.from.getAttribute("data-status");
+                        if (cfg.revisionId && to === cfg.revisionId) {
+                            return false;
+                        }
+                        if (cfg.reviewId && cfg.completeId && from === cfg.reviewId && to === cfg.completeId) {
+                            return false;
+                        }
+                        return true;
+                    },
+                    onAdd: function (evt) {
+                        var taskId = evt.item.dataset.id;
+                        var newStatus = evt.to.dataset.status;
+                        var url = @json($taskStatusUpdateUrlTemplate).replace('__TASK_ID__', taskId);
+                        fetch(url, {
+                            method: "POST",
+                            headers: {
+                                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                                "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ id_status: newStatus }),
                         })
-                        .catch(() => alert("Error update status"));
-                }
+                            .then(function (res) {
+                                return res.json().then(function (data) {
+                                    return { ok: res.ok, data: data };
+                                });
+                            })
+                            .then(function (r) {
+                                if (!r.ok || !r.data.success) {
+                                    alert(r.data && r.data.message ? r.data.message : "Gagal update status");
+                                    evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex] || null);
+                                    return;
+                                }
+                                var data = r.data;
+                                if (typeof window.refreshTaskRunningTimerAfterStatus === "function") {
+                                    window.refreshTaskRunningTimerAfterStatus(
+                                        evt.item,
+                                        data.deadline_iso || null,
+                                        !!data.show_timer,
+                                        data.frozen_remain_ms != null ? data.frozen_remain_ms : null
+                                    );
+                                }
+                            })
+                            .catch(function () {
+                                alert("Error update status");
+                                evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex] || null);
+                            });
+                    },
+                });
             });
-        });
+        })();
     </script>
     <!-- Using native date input to match create project UI -->
     <script src="{{ asset('build/js/main/tasks.js') }}"></script>

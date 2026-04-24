@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Support\StatusSdmManager;
 use App\Support\TaskBoardAccess;
+use App\Support\TaskRunningTimer;
 
 class UpdateTaskController extends Controller
 {
@@ -19,6 +20,9 @@ class UpdateTaskController extends Controller
         $task = Task::findOrFail($request->id);
 
         TaskBoardAccess::assertCanActOnTaskForBoard(Auth::user(), $task);
+
+        $task->loadMissing('status');
+        abort_if(TaskRunningTimer::isReviewStatus($task->status), 403);
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',

@@ -59,6 +59,7 @@ use App\Http\Controllers\Director\Tasks\TransferProjectTaskController as Directo
 use App\Http\Controllers\Director\Tasks\TransferTaskController as DirectorTransferTaskController;
 use App\Http\Controllers\Director\Tasks\UpdateProjectTaskController as DirectorUpdateProjectTaskController;
 use App\Http\Controllers\Director\Tasks\UpdateTaskController as DirectorUpdateTaskController;
+use App\Http\Controllers\Director\Tasks\ReviewTaskDecisionController as DirectorReviewTaskDecisionController;
 use App\Http\Controllers\UploadpictProfileController;
 use App\Http\Controllers\UploadProfileController;
 use App\Http\Controllers\User\Administration\CreateAdministrationController as UserCreateAdministrationController;
@@ -237,6 +238,7 @@ Route::middleware(['auth', 'checkRole:director', 'nocache'])->group(function () 
             Route::get('', DirectorIndexTaskController::class)->name('director.tasks.index');
             Route::post('/task-store', DirectorStoreTaskController::class)->name('director.task.store');
             Route::post('/task-update', DirectorUpdateTaskController::class)->name('director.task.update');
+            Route::post('/task-review-decision/{id}', DirectorReviewTaskDecisionController::class)->name('director.task.reviewDecision');
             Route::post('/task-update-status/{id}', UpdateStatusTaskController::class)->name('director.task.updateStatus');
             Route::post('/task/task-transfer', DirectorTransferTaskController::class)->name('director.task.transfer');
         });

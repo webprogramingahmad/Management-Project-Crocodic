@@ -40,6 +40,7 @@ class StatusTask extends Model
             'todo', 'to do' => '#EA4949',
             'progress', 'in progress' => '#FFB42E',
             'review' => '#6FAEC9',
+            'revision' => '#C2410C',
             'complete' => '#7DB546',
             default => '#6c757d',
         };

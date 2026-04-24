@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Support\StatusSdmManager;
 
 class UpdateProjectTaskController extends Controller
@@ -15,6 +16,8 @@ class UpdateProjectTaskController extends Controller
      */
     public function __invoke(Request $request, $id)
     {
+        abort_if(Auth::user()->role?->role === 'executive', 403);
+
         $project = Project::findOrFail($id);
         $task = Task::where('id_project', $project->id)->findOrFail($request->id);
 

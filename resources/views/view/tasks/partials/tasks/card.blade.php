@@ -4,6 +4,18 @@
     $task->loadMissing(['status', 'difficulty']);
     $deadline = \App\Support\TaskRunningTimer::deadlineFor($task);
     $showRunningTimer = \App\Support\TaskRunningTimer::shouldShowTimer($task);
+    $liveTimer = \App\Support\TaskRunningTimer::shouldShowLiveTimer($task);
+    $frozenRemainMs = \App\Support\TaskRunningTimer::frozenRemainMsForReview($task);
+    $timerChipClass = 'task-running-timer px-2 py-1';
+    if ($showRunningTimer) {
+        if ($frozenRemainMs !== null) {
+            $timerChipClass .= $frozenRemainMs > 0 ? ' task-running-timer--ok' : ' task-running-timer--late';
+        } else {
+            $timerChipClass .= ' task-running-timer--ok';
+        }
+    } else {
+        $timerChipClass .= ' d-none';
+    }
 @endphp
 <style>
     /* Hilangkan style default link pada card task */
@@ -30,7 +42,7 @@ html[data-theme="dark"] .task-link .text-muted {
 /* Timer: chip metadata halus (selaras kartu putih — ref. Linear/Notion-style tags) */
 .task-running-timer {
     font-variant-numeric: tabular-nums;
-    min-width: 5.25rem;
+    min-width: 5.75rem; /* muat "-HH:MM:SS" */
     text-align: center;
     font-size: 0.6875rem;
     font-weight: 600;
@@ -93,8 +105,9 @@ html[data-theme="dark"] .task-running-timer--late {
                 <span>{{ $task->created_at->format('M d, Y') }}</span>
             </div>
             <span
-                class="task-running-timer px-2 py-1 @unless ($showRunningTimer && $deadline) d-none @endunless @if ($showRunningTimer && $deadline) task-running-timer--ok @endif"
-                @if ($showRunningTimer && $deadline) data-deadline="{{ $deadline->toIso8601String() }}" @endif>--:--:--</span>
+                class="{{ $timerChipClass }}"
+                @if ($liveTimer && $deadline) data-deadline="{{ $deadline->toIso8601String() }}" @endif
+                @if ($frozenRemainMs !== null) data-frozen-ms="{{ $frozenRemainMs }}" @endif>--:--:--</span>
         </div>
         <span class="btn btn-sm rounded-2 border-0 task-meta-pill"
             style="background-color: {{ $task->difficulty->background_color }}; color: {{ $task->difficulty->text_color }};">{{ $task->difficulty->difficulty }}</span>

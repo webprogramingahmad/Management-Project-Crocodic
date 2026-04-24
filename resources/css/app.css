@@ -1090,7 +1090,8 @@ html[data-theme="dark"] .app-shell__header header.bg-white {
 .dashboard-left-tab-panel,
 .dashboard-notify-scroll,
 .tasks-board-page .overflow-scroll-container,
-.tasks-board-columns-wrap {
+.tasks-board-columns-wrap,
+.tasks-board-page .tasks-board-columns-inner {
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -1101,7 +1102,8 @@ html[data-theme="dark"] .app-shell__header header.bg-white {
 .dashboard-left-tab-panel::-webkit-scrollbar,
 .dashboard-notify-scroll::-webkit-scrollbar,
 .tasks-board-page .overflow-scroll-container::-webkit-scrollbar,
-.tasks-board-columns-wrap::-webkit-scrollbar {
+.tasks-board-columns-wrap::-webkit-scrollbar,
+.tasks-board-page .tasks-board-columns-inner::-webkit-scrollbar {
     display: none;
     width: 0;
     height: 0;

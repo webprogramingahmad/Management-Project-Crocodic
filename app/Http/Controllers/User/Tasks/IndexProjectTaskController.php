@@ -58,6 +58,15 @@ class IndexProjectTaskController extends Controller
             ->select('tasks.*')
             ->get();
 
+        $taskRevision = Task::with(['user', 'difficulty', 'status', 'project'])
+            ->where('tasks.id_project', $project->id)
+            ->excludingStandByDifficulty()
+            ->join('status_tasks', 'status_tasks.id', '=', 'tasks.id_status')
+            ->where('status_tasks.status', 'Revision')
+            ->when($date, fn($q) => $q->whereDate('tasks.created_at', $date))
+            ->select('tasks.*')
+            ->get();
+
         $taskComplete = Task::with(['user', 'difficulty', 'status', 'project'])
             ->where('tasks.id_project', $project->id)
             ->excludingStandByDifficulty()
@@ -81,8 +90,9 @@ class IndexProjectTaskController extends Controller
         $statusTodo     = StatusTask::where('status', 'To Do')->first();
         $statusProgress = StatusTask::where('status', 'In progress')->first();
         $statusReview   = StatusTask::where('status', 'Review')->first();
+        $statusRevision = StatusTask::where('status', 'Revision')->first();
         $statusComplete = StatusTask::where('status', 'Complete')->first();
 
-        return view('view.tasks.index-project', compact('tasks', 'project', 'projects', 'projectAllowsTaskCreation', 'difficulties', 'taskTodo', 'taskProgress', 'taskReview', 'taskComplete', 'statusTodo', 'statusProgress', 'statusReview', 'statusComplete', 'date'));
+        return view('view.tasks.index-project', compact('tasks', 'project', 'projects', 'projectAllowsTaskCreation', 'difficulties', 'taskTodo', 'taskProgress', 'taskReview', 'taskRevision', 'taskComplete', 'statusTodo', 'statusProgress', 'statusReview', 'statusRevision', 'statusComplete', 'date'));
     }
 }

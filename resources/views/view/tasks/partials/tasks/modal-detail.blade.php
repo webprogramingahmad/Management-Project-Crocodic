@@ -74,5 +74,13 @@
 
         </div>
 
+        @if (Auth::user()->role->role === 'director')
+            <div class="modal-footer border-top-0 pt-0 d-none" id="detail-task-review-footer">
+                <button type="button" class="btn btn-outline-primary ms-auto" id="detail-review-decision-btn">
+                    Review decision
+                </button>
+            </div>
+        @endif
+
     </div>
 </div>

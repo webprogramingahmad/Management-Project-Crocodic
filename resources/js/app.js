@@ -110,6 +110,17 @@ function taskDescriptionToHtml(raw) {
     return out.replace(/\r\n|\r|\n/g, "<br>");
 }
 
+function syncEditTaskModalFromCard(card) {
+    var normal = document.getElementById("edit-task-normal-fields");
+    var mainSubmit = document.getElementById("edit-task-submit-btn");
+    if (normal) {
+        normal.classList.remove("d-none");
+    }
+    if (mainSubmit) {
+        mainSubmit.classList.remove("d-none");
+    }
+}
+
 function setModalTaskDescriptionFromCard(card) {
     const descRow = document.querySelector(".modal-task-description-row");
     const descEl = document.querySelector(".modal-task-description");
@@ -138,6 +149,7 @@ document.addEventListener("DOMContentLoaded", function () {
     initProfilePopups();
     document.querySelectorAll('.task-link').forEach(function (card) {
         card.addEventListener('click', function () {
+            window.__lastTaskCardForEdit = this;
             var taskId = card.dataset.taskId || '';
             // Title
             document.querySelector('.task-title').textContent = card.dataset.taskTitle || '-';
@@ -150,6 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 case 'todo': statusColor = '#EA4949'; break;
                 case 'in progress': statusColor = '#FFB42E'; break;
                 case 'review': statusColor = '#6FAEC9'; break;
+                case 'revision': statusColor = '#C2410C'; break;
                 case 'complete': statusColor = '#7DB546'; break;
             }
             statusBadge.style.backgroundColor = statusColor;
@@ -219,8 +232,146 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             setModalTaskDescriptionFromCard(card);
+
+            var editLink = document.getElementById("edit-task-link");
+            if (editLink) {
+                var r = card.dataset.taskRole;
+                var st = (card.dataset.taskStatus || "").toLowerCase();
+                var hideEdit =
+                    r === "executive" || (r === "staff" && st === "review");
+                editLink.classList.toggle("d-none", hideEdit);
+            }
+
+            var rdFooter = document.getElementById("detail-task-review-footer");
+            var rdBtn = document.getElementById("detail-review-decision-btn");
+            if (rdFooter && rdBtn) {
+                var isReview = statusText.toLowerCase() === "review";
+                rdFooter.classList.toggle("d-none", !isReview);
+                rdBtn.classList.toggle("d-none", !isReview);
+            }
         });
     });
+
+    var reviewDecisionModalForm = document.getElementById(
+        "form-review-decision-modal"
+    );
+    var reviewDecisionModalEl = document.getElementById("review-decision-modal");
+
+    if (reviewDecisionModalEl) {
+        reviewDecisionModalEl.addEventListener("hidden.bs.modal", function () {
+            if (window.__taskReviewDecisionSubmitting) {
+                window.__taskReviewDecisionSubmitting = false;
+                window.__taskReviewDecisionOpenedFromDetail = false;
+                return;
+            }
+            if (!window.__taskReviewDecisionOpenedFromDetail) {
+                return;
+            }
+            window.__taskReviewDecisionOpenedFromDetail = false;
+            var detailEl = document.getElementById("detail-task");
+            if (!detailEl) {
+                return;
+            }
+            setTimeout(function () {
+                bootstrap.Modal.getOrCreateInstance(detailEl).show();
+            }, 400);
+        });
+    }
+
+    if (reviewDecisionModalForm) {
+        reviewDecisionModalForm.addEventListener("submit", function () {
+            window.__taskReviewDecisionSubmitting = true;
+        });
+        reviewDecisionModalForm.addEventListener("change", function (e) {
+            if (e.target && e.target.name === "decision") {
+                var wrap = document.getElementById("rd-revision-hours-wrap");
+                if (wrap) {
+                    wrap.classList.toggle(
+                        "d-none",
+                        e.target.value !== "revision"
+                    );
+                }
+            }
+        });
+    }
+
+    var rdModalBtn = document.getElementById("detail-review-decision-btn");
+    if (rdModalBtn) {
+        function prepareReviewDecisionForm() {
+            var tpl = window.REVIEW_DECISION_URL_TEMPLATE;
+            var form = document.getElementById("form-review-decision-modal");
+            if (!tpl || !form) {
+                return false;
+            }
+            var tid =
+                (document.getElementById("edit_task_id") || {}).value ||
+                (window.__lastTaskCardForEdit &&
+                    window.__lastTaskCardForEdit.dataset.taskId) ||
+                "";
+            if (!tid) {
+                return false;
+            }
+            form.action = tpl.replace("__TASK_ID__", tid);
+            var dc = document.getElementById("rd_decision_complete");
+            var dr = document.getElementById("rd_decision_revision");
+            if (dc) {
+                dc.checked = true;
+            }
+            if (dr) {
+                dr.checked = false;
+            }
+            var rw = document.getElementById("rd-revision-hours-wrap");
+            if (rw) {
+                rw.classList.add("d-none");
+            }
+            var sel = document.getElementById("rd_revision_hours");
+            if (sel) {
+                sel.value = "2";
+            }
+            return true;
+        }
+
+        function openReviewDecisionAfterDetailClosed() {
+            var detailEl = document.getElementById("detail-task");
+            var reviewEl = document.getElementById("review-decision-modal");
+            if (!detailEl || !reviewEl) {
+                return;
+            }
+            if (!prepareReviewDecisionForm()) {
+                return;
+            }
+            window.__taskReviewDecisionOpenedFromDetail = true;
+            var detailModal =
+                bootstrap.Modal.getInstance(detailEl) ||
+                bootstrap.Modal.getOrCreateInstance(detailEl);
+            function onDetailHidden() {
+                detailEl.removeEventListener("hidden.bs.modal", onDetailHidden);
+                bootstrap.Modal.getOrCreateInstance(reviewEl).show();
+            }
+            detailEl.addEventListener("hidden.bs.modal", onDetailHidden, {
+                once: true,
+            });
+            detailModal.hide();
+        }
+
+        rdModalBtn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            if (rdModalBtn.classList.contains("d-none")) {
+                return;
+            }
+            openReviewDecisionAfterDetailClosed();
+        });
+        rdModalBtn.addEventListener("keydown", function (e) {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                if (rdModalBtn.classList.contains("d-none")) {
+                    return;
+                }
+                openReviewDecisionAfterDetailClosed();
+            }
+        });
+    }
 
     /*
      * View task → Edit: tutup modal detail dulu, lalu buka edit (satu modal aktif).
@@ -248,6 +399,9 @@ document.addEventListener("DOMContentLoaded", function () {
         editFromDetailLink.addEventListener("click", function (e) {
             e.preventDefault();
             e.stopPropagation();
+            if (editFromDetailLink.classList.contains("d-none")) {
+                return;
+            }
             openEditAfterDetailClosed();
         });
         editFromDetailLink.addEventListener("keydown", function (e) {
@@ -260,6 +414,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     var editTaskModalEl = document.getElementById("edit-task");
     if (editTaskModalEl) {
+        editTaskModalEl.addEventListener("show.bs.modal", function () {
+            var c = window.__lastTaskCardForEdit;
+            if (c) {
+                syncEditTaskModalFromCard(c);
+            }
+        });
         editTaskModalEl.addEventListener("hidden.bs.modal", function () {
             if (!window.__taskEditOpenedFromDetail) {
                 return;
@@ -279,23 +439,34 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function formatTaskRunningCountdown(ms) {
-    if (ms <= 0) {
-        return "00:00:00";
-    }
-    const totalSec = Math.floor(ms / 1000);
+    const totalSec = Math.floor(Math.abs(ms) / 1000);
     const h = Math.floor(totalSec / 3600);
     const m = Math.floor((totalSec % 3600) / 60);
     const s = totalSec % 60;
-    return (
+    const hms =
         String(h).padStart(2, "0") +
         ":" +
         String(m).padStart(2, "0") +
         ":" +
-        String(s).padStart(2, "0")
-    );
+        String(s).padStart(2, "0");
+    // Sebelum deadline: sisa waktu. Setelah habis: lanjut hitung kelebihan waktu (molor), dengan prefiks -
+    if (ms > 0) {
+        return hms;
+    }
+    return "-" + hms;
 }
 
 function updateOneTaskRunningTimer(el) {
+    const frozenRaw = el.getAttribute("data-frozen-ms");
+    if (frozenRaw != null && frozenRaw !== "") {
+        const ms = parseInt(frozenRaw, 10);
+        if (!Number.isNaN(ms)) {
+            el.textContent = formatTaskRunningCountdown(ms);
+            el.classList.toggle("task-running-timer--ok", ms > 0);
+            el.classList.toggle("task-running-timer--late", ms <= 0);
+        }
+        return;
+    }
     const raw = el.getAttribute("data-deadline");
     if (!raw) {
         return;
@@ -314,7 +485,9 @@ function updateOneTaskRunningTimer(el) {
 function initTaskRunningTimers() {
     function tick() {
         document
-            .querySelectorAll(".task-running-timer[data-deadline]")
+            .querySelectorAll(
+                ".task-running-timer[data-deadline], .task-running-timer[data-frozen-ms]"
+            )
             .forEach(updateOneTaskRunningTimer);
     }
     tick();
@@ -327,7 +500,8 @@ function initTaskRunningTimers() {
 window.refreshTaskRunningTimerAfterStatus = function (
     columnItemEl,
     deadlineIso,
-    showTimer
+    showTimer,
+    frozenRemainMs
 ) {
     if (!columnItemEl) {
         return;
@@ -336,16 +510,32 @@ window.refreshTaskRunningTimerAfterStatus = function (
     if (!el) {
         return;
     }
-    if (showTimer && deadlineIso) {
+    const frozenNum =
+        frozenRemainMs != null && frozenRemainMs !== ""
+            ? Number(frozenRemainMs)
+            : NaN;
+    const hasFrozen = showTimer && !Number.isNaN(frozenNum);
+    const hasLive = showTimer && deadlineIso;
+
+    if (hasFrozen) {
         el.classList.remove("d-none");
+        el.removeAttribute("data-deadline");
+        el.setAttribute("data-frozen-ms", String(frozenNum));
+        updateOneTaskRunningTimer(el);
+        return;
+    }
+    if (hasLive) {
+        el.classList.remove("d-none");
+        el.removeAttribute("data-frozen-ms");
         el.setAttribute("data-deadline", deadlineIso);
         updateOneTaskRunningTimer(el);
-    } else {
-        el.classList.add("d-none");
-        el.removeAttribute("data-deadline");
-        el.textContent = "--:--:--";
-        el.classList.remove("task-running-timer--ok", "task-running-timer--late");
+        return;
     }
+    el.classList.add("d-none");
+    el.removeAttribute("data-deadline");
+    el.removeAttribute("data-frozen-ms");
+    el.textContent = "--:--:--";
+    el.classList.remove("task-running-timer--ok", "task-running-timer--late");
 };
 
 // Fungsi untuk update data-task-status pada card dan status di modal detail
@@ -367,6 +557,7 @@ function updateTaskCardStatus(idTask, newStatus) {
                     case 'todo': statusColor = '#EA4949'; break;
                     case 'in progress': statusColor = '#FFB42E'; break;
                     case 'review': statusColor = '#6FAEC9'; break;
+                    case 'revision': statusColor = '#C2410C'; break;
                     case 'complete': statusColor = '#7DB546'; break;
                 }
                 statusBadge.style.backgroundColor = statusColor;

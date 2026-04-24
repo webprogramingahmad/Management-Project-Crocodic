@@ -37,6 +37,21 @@
     background-color: #222 !important;  /* sedikit lebih terang saat hover */
 }
 
+/* Tombol Edit profil (semua role): pinggiran jelas seperti tombol Cancel / chip border */
+.btn-profile-edit {
+    border: 1px solid #212529 !important;
+    box-sizing: border-box;
+}
+.btn-profile-edit:hover {
+    border-color: #000 !important;
+}
+html[data-theme="dark"] .btn-profile-edit {
+    border-color: rgba(255, 255, 255, 0.45) !important;
+}
+html[data-theme="dark"] .btn-profile-edit:hover {
+    border-color: rgba(255, 255, 255, 0.65) !important;
+}
+
 /* Shadow kustom untuk card */
 .card-custom-shadow {
     box-shadow:
@@ -144,13 +159,13 @@ html[data-theme="dark"] .profile-page-user-role {
                                 <div class="d-flex justify-content-end mb-3">
                                             @if ($role === 'staff')
                                                 <a href="{{ route('staff.profile.edit', $user->id) }}" id="editBtn"
-                                                    class="btn btn-hitam" type="button">Edit</a>
+                                                    class="btn btn-hitam btn-profile-edit" type="button">Edit</a>
                                             @elseif($role === 'director')
                                                 <a href="{{ route('director.profile.edit', $user->id) }}" id="editBtn"
-                                                    class="btn btn-hitam" type="button">Edit</a>
+                                                    class="btn btn-hitam btn-profile-edit" type="button">Edit</a>
                                             @else
                                                 <a href="{{ route('executive.profile.edit', $user->id) }}" id="editBtn"
-                                                    class="btn btn-hitam" type="button">Edit</a>
+                                                    class="btn btn-hitam btn-profile-edit" type="button">Edit</a>
                                             @endif
                                         </div>
                         <div class="row">

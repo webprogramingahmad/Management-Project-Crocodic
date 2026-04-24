@@ -26,14 +26,16 @@
                             <input type="email" name="email" class="form-control mb-2 rounded-3" id="email"
                                 placeholder="Santiago@email.com">
                         </div>
-                        <div>
+                        <div id="division-field-wrapper">
                             <label for="division" class="form-label mb-1">Division</label>
-                            <select name="id_divisi" id="division" class="form-select mb-2 rounded-3">
-                                <option selected disabled>Enter division</option>
+                            <select name="id_divisi" id="division" class="form-select mb-2 rounded-3" disabled
+                                aria-disabled="true" title="Pilih role Staff untuk mengisi divisi">
+                                <option value="">Select division</option>
                                 @foreach ($divisions as $division)
                                     <option value="{{ $division->id }}">{{ $division->divisi }}</option>
                                 @endforeach
                             </select>
+                            <p id="division-field-hint" class="small text-muted mb-0">Pilih role terlebih dahulu. Divisi hanya untuk staff (engineer).</p>
                         </div>
                     </div>
                     <div class="col-12 col-md-6">
@@ -53,10 +55,10 @@
                         </div>
                         <div>
                             <label for="role" class="form-label mb-1">Role</label>
-                            <select name="id_role" id="role" class="form-select mb-2 rounded-3">
-                                <option selected disabled>Enter role</option>
+                            <select name="id_role" id="role" class="form-select mb-2 rounded-3" required>
+                                <option value="" selected disabled>Enter role</option>
                                 @foreach ($roles as $role)
-                                    <option value="{{ $role->id }}">{{ \App\Support\RoleDisplay::label($role->role ?? null) }}</option>
+                                    <option value="{{ $role->id }}" data-role-key="{{ $role->role }}">{{ \App\Support\RoleDisplay::label($role->role ?? null) }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -74,6 +76,44 @@
 @section('js')
     <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const roleSelect = document.getElementById('role');
+        const divisionWrapper = document.getElementById('division-field-wrapper');
+        const divisionSelect = document.getElementById('division');
+        const divisionHint = document.getElementById('division-field-hint');
+        function syncDivisionField() {
+            if (!roleSelect || !divisionWrapper || !divisionSelect) return;
+            const opt = roleSelect.options[roleSelect.selectedIndex];
+            const key = opt ? (opt.getAttribute('data-role-key') || '') : '';
+            if (key === 'staff') {
+                divisionSelect.disabled = false;
+                divisionSelect.removeAttribute('aria-disabled');
+                divisionSelect.removeAttribute('title');
+                divisionSelect.setAttribute('required', 'required');
+                divisionSelect.classList.remove('opacity-50', 'bg-light');
+                if (divisionHint) {
+                    divisionHint.textContent = 'Wajib untuk staff (engineer).';
+                }
+            } else {
+                divisionSelect.value = '';
+                divisionSelect.disabled = true;
+                divisionSelect.setAttribute('aria-disabled', 'true');
+                divisionSelect.setAttribute('title', 'Role executive/director tidak memakai divisi operasional');
+                divisionSelect.removeAttribute('required');
+                divisionSelect.classList.add('opacity-50', 'bg-light');
+                if (divisionHint) {
+                    if (!key) {
+                        divisionHint.textContent = 'Pilih role terlebih dahulu. Divisi hanya untuk staff (engineer).';
+                    } else {
+                        divisionHint.textContent = 'Role executive & director tidak memilih divisi. Field ini dinonaktifkan.';
+                    }
+                }
+            }
+        }
+        if (roleSelect) {
+            roleSelect.addEventListener('change', syncDivisionField);
+            syncDivisionField();
+        }
+
         const togglePassword = document.getElementById('togglePassword');
         const password = document.getElementById('password');
         if (togglePassword && password) {

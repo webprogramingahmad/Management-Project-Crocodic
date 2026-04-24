@@ -33,6 +33,11 @@ class StatusTaskSeeder extends Seeder
             ],
             [
                 'id' => Str::uuid(),
+                'status' => 'Revision',
+                'class' => 'revision'
+            ],
+            [
+                'id' => Str::uuid(),
                 'status' => 'Complete',
                 'class' => 'complete'
             ]

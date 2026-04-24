@@ -83,7 +83,10 @@ class IndexDashboardController extends Controller
                     });
             })
             ->whereHas('status', function ($q) {
-                $q->whereIn('status', ['To Do', 'In progress', 'Review']);
+                $q->where(function ($w) {
+                    $w->whereIn('class', ['todo', 'progress', 'review', 'revision'])
+                        ->orWhereIn('status', ['To Do', 'In progress', 'Review', 'Revision']);
+                });
             })
             ->excludingStandByDifficulty()
             ->select('tasks.*')

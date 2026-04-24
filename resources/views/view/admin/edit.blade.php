@@ -17,7 +17,13 @@
                     class="profile-avatar" alt="User Photo" style="height: 200px; width: 200px; border-radius: 15px; object-fit: cover;">
                 <div class="mx-3">
                     <h5 class="mb-1 fw-bold">{{ Str::ucfirst($user->name) }}</h5>
-                    <p class="text-muted mb-2">{{ Str::ucfirst($user->division?->divisi ?? '-') }}</p>
+                    <p class="text-muted mb-2">
+                        @if (($user->role->role ?? null) === 'staff')
+                            {{ Str::ucfirst($user->division?->divisi ?? '-') }}
+                        @else
+                            {{ \App\Support\RoleDisplay::label($user->role->role ?? null) }}
+                        @endif
+                    </p>
                     <div class="d-flex ">
                         <button class="btn btn-sm btn-primary mb-2 mb-md-0 me-md-2" id="openAvatarModalBtn">Upload
                             Picture</button>

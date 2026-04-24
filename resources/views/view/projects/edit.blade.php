@@ -7,6 +7,29 @@
 @section('css')
     <link rel="stylesheet" href="{{ asset('build/css/main/project-create.css') }}">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        /* Cancel: border & teks selaras tombol create project (sama seperti halaman create) */
+        .project-form-cancel-btn {
+            color: #212529 !important;
+            background-color: #ffffff !important;
+            border: 1px solid #6c757d !important;
+            text-decoration: none !important;
+        }
+        .project-form-cancel-btn:hover {
+            color: #000 !important;
+            background-color: #f8f9fa !important;
+            border-color: #495057 !important;
+        }
+        html[data-theme="dark"] .project-form-cancel-btn {
+            color: #fafafa !important;
+            background-color: rgba(255, 255, 255, 0.12) !important;
+            border-color: #a1a1aa !important;
+        }
+        html[data-theme="dark"] .project-form-cancel-btn:hover {
+            background-color: rgba(255, 255, 255, 0.18) !important;
+            border-color: #d4d4d8 !important;
+        }
+    </style>
 @endsection
 
 @php
@@ -126,7 +149,7 @@
                 <div class="d-flex justify-content-end gap-3 m-4">
                     <a @if ($role === 'executive') href="{{ route('executive.projects.index') }}" @else
                     href="{{ route('director.projects.index') }}" @endif
-                        class="btn btn-cancel px-5 py-0 rounded-3" style="height: 35px; line-height:35px">Cancel</a>
+                        class="btn project-form-cancel-btn px-5 py-0 rounded-3" style="height: 35px; line-height:35px">Cancel</a>
                     <button type="submit" class="btn btn-create px-5 py-0 rounded-3" style="background-color:black; color:#ffffff; height:35px; line-height:35px">Edit</button>
                 </div>
             </div>
