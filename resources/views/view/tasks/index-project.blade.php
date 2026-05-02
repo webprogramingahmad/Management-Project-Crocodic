@@ -379,7 +379,11 @@
                                         evt.item,
                                         data.deadline_iso || null,
                                         !!data.show_timer,
-                                        data.frozen_remain_ms != null ? data.frozen_remain_ms : null
+                                        data.frozen_remain_ms != null ? data.frozen_remain_ms : null,
+                                        {
+                                            progress_balance_seconds: data.progress_balance_seconds ?? null,
+                                            revision_cycles: data.revision_cycles ?? [],
+                                        }
                                     );
                                 }
                             })

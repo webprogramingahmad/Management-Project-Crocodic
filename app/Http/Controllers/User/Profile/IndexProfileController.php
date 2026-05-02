@@ -17,7 +17,7 @@ class IndexProfileController extends Controller
     {
         $user = Auth::user();
         $acceptedStatus = StatusAdministration::where('name', 'accept')->first();
-        $completeStatus = StatusTask::where('status', 'Complete')->first();
+        $completeStatus = StatusTask::firstByClass('complete');
 
         $accepted_absent_count = $user->administrations()
             ->where('id_status', $acceptedStatus?->id)

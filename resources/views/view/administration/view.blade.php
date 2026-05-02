@@ -77,7 +77,7 @@
 
         .adm-detail-meta {
             border-radius: 12px;
-            border: 1px solid #E0E0E0CE;
+            border: 1px solid rgba(224, 224, 224, 0.7);
             background: #fafafa;
         }
 
@@ -128,7 +128,7 @@
             height: 2.125rem;
             border-radius: 10px;
             background: #f4f4f5;
-            border: 1px solid #E0E0E0CE;
+            border: 1px solid rgba(224, 224, 224, 0.7);
             font-size: 1rem;
             line-height: 1;
             transition: background 0.15s ease, border-color 0.15s ease;
@@ -160,6 +160,25 @@
             color: #212529;
         }
 
+        .adm-view-main-card {
+            border-radius: 15px;
+            border: 1px solid rgba(224, 224, 224, 0.7) !important;
+        }
+
+        .adm-view-section-divider {
+            border-color: rgba(224, 224, 224, 0.7) !important;
+        }
+
+        .adm-view-desc-box {
+            border-color: rgba(224, 224, 224, 0.7) !important;
+            min-height: 4rem;
+            line-height: 1.55;
+        }
+
+        .adm-view-sub-divider {
+            border-color: rgba(224, 224, 224, 0.7) !important;
+        }
+
         html[data-theme="dark"] .adm-view-heading {
             color: #f4f4f5 !important;
         }
@@ -167,11 +186,18 @@
         html[data-theme="dark"] .adm-view-subtitle {
             color: #a1a1aa !important;
         }
+
+        html[data-theme="dark"] .adm-view-main-card,
+        html[data-theme="dark"] .adm-view-section-divider,
+        html[data-theme="dark"] .adm-view-desc-box,
+        html[data-theme="dark"] .adm-view-sub-divider {
+            border-color: rgba(161, 161, 170, 0.35) !important;
+        }
     </style>
 @endsection
 
 @php
-    use App\Support\ProjectDuration;
+    use App\Support\LeaveDuration;
 
     $role = Auth::user()->role->role;
     $administrationIndexUrl = $role === 'executive'
@@ -181,7 +207,7 @@
             : route('staff.administration.index'));
     $statusKey = strtolower((string) ($administration->status->name ?? ''));
     $statusMod = in_array($statusKey, ['accept', 'reject', 'pending'], true) ? $statusKey : 'default';
-    $durationLabel = ProjectDuration::label(
+    $durationLabel = LeaveDuration::label(
         $administration->start_date?->format('Y-m-d'),
         $administration->end_date?->format('Y-m-d')
     );
@@ -192,8 +218,7 @@
 @section('content')
     <div class="container-fluid px-2 py-3">
         <div class="mx-auto" style="max-width: 880px;">
-            <div class="card border-0 shadow-sm"
-                style="border-radius: 15px; border: 1px solid #E0E0E0CE !important;">
+            <div class="card shadow-sm adm-view-main-card">
                 <div class="card-body p-4 p-md-5">
                     <a href="{{ $administrationIndexUrl }}"
                         class="adm-back-link d-inline-flex align-items-center gap-2 text-decoration-none mb-4">
@@ -203,8 +228,7 @@
                         <span class="fw-semibold">Permission list</span>
                     </a>
 
-                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 pb-4 mb-2 border-bottom"
-                        style="border-color: #E0E0E0CE !important;">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 pb-4 mb-2 border-bottom adm-view-section-divider">
                         <div>
                             <h1 class="h4 fw-bold mb-1 adm-view-heading">Leave submission</h1>
                             <p class="text-muted small mb-0 adm-view-subtitle">Detail izin / absent</p>
@@ -274,8 +298,7 @@
                     <div class="mb-4">
                         <div class="text-muted text-uppercase small fw-semibold mb-2"
                             style="font-size: 0.7rem; letter-spacing: 0.04em;">Description</div>
-                        <div class="rounded-3 p-3 border text-secondary"
-                            style="border-color: #E0E0E0CE !important; min-height: 4rem; line-height: 1.55;">
+                        <div class="rounded-3 p-3 border text-secondary adm-view-desc-box">
                             @if ($administration->description)
                                 {!! nl2br(e($administration->description)) !!}
                             @else
@@ -286,8 +309,7 @@
 
                     <div class="row g-3 mb-2">
                         <div class="col-sm-6">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 border-bottom"
-                                style="border-color: #f1f3f5 !important;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 border-bottom adm-view-sub-divider">
                                 <span class="text-muted small fw-semibold"><i
                                         class="bi bi-laptop me-2"></i>Bring laptop</span>
                                 <span
@@ -295,8 +317,7 @@
                             </div>
                         </div>
                         <div class="col-sm-6">
-                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 border-bottom"
-                                style="border-color: #f1f3f5 !important;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 py-2 border-bottom adm-view-sub-divider">
                                 <span class="text-muted small fw-semibold"><i
                                         class="bi bi-chat-dots me-2"></i>Contactable</span>
                                 <span
@@ -306,8 +327,7 @@
                     </div>
 
                     @if ($role === 'executive' && strtolower((string) ($administration->status->name ?? '')) === 'pending')
-                        <div class="d-flex flex-wrap gap-2 justify-content-end pt-4 mt-2 border-top"
-                            style="border-color: #E0E0E0CE !important;">
+                        <div class="d-flex flex-wrap gap-2 justify-content-end pt-4 mt-2 border-top adm-view-section-divider">
                             <form action="{{ route('executive.administrations.updateStatus', $administration->id) }}"
                                 method="POST" class="d-inline flex-grow-1 flex-sm-grow-0">
                                 @csrf

@@ -6,6 +6,19 @@
 
 @section('css')
     <link rel="stylesheet" href="{{ asset('build/css/main/admin-create.css') }}">
+    <style>
+        @media (prefers-color-scheme: dark) {
+            #join-date::-webkit-calendar-picker-indicator {
+                filter: invert(0.85);
+                opacity: 0.9;
+            }
+        }
+
+        html[data-theme="dark"] #join-date::-webkit-calendar-picker-indicator {
+            filter: invert(0.85);
+            opacity: 0.9;
+        }
+    </style>
 @endsection
 
 @section('content')
@@ -26,16 +39,23 @@
                             <input type="email" name="email" class="form-control mb-2 rounded-3" id="email"
                                 placeholder="Santiago@email.com">
                         </div>
-                        <div id="division-field-wrapper">
-                            <label for="division" class="form-label mb-1">Division</label>
-                            <select name="id_divisi" id="division" class="form-select mb-2 rounded-3" disabled
-                                aria-disabled="true" title="Pilih role Staff untuk mengisi divisi">
-                                <option value="">Select division</option>
-                                @foreach ($divisions as $division)
-                                    <option value="{{ $division->id }}">{{ $division->divisi }}</option>
+                        <div>
+                            <label for="nik" class="form-label mb-1">NIK</label>
+                            <input type="text" name="nik" class="form-control mb-2 rounded-3" id="nik"
+                                placeholder="Enter NIK">
+                        </div>
+                        <div>
+                            <label for="join-date" class="form-label mb-1">Join Date</label>
+                            <input type="date" name="tgl_masuk" class="form-control mb-2 rounded-3" id="join-date">
+                        </div>
+                        <div>
+                            <label for="employment-status" class="form-label mb-1">Employment Status</label>
+                            <select name="id_status_sdm" id="employment-status" class="form-select mb-2 rounded-3" required>
+                                <option value="" selected disabled>Select employment status</option>
+                                @foreach ($employmentStatuses as $employmentStatus)
+                                    <option value="{{ $employmentStatus->id }}">{{ $employmentStatus->status_sdm }}</option>
                                 @endforeach
                             </select>
-                            <p id="division-field-hint" class="small text-muted mb-0">Pilih role terlebih dahulu. Divisi hanya untuk staff (engineer).</p>
                         </div>
                     </div>
                     <div class="col-12 col-md-6">
@@ -61,6 +81,17 @@
                                     <option value="{{ $role->id }}" data-role-key="{{ $role->role }}">{{ \App\Support\RoleDisplay::label($role->role ?? null) }}</option>
                                 @endforeach
                             </select>
+                        </div>
+                        <div id="division-field-wrapper">
+                            <label for="division" class="form-label mb-1">Division</label>
+                            <select name="id_divisi" id="division" class="form-select mb-2 rounded-3" disabled
+                                aria-disabled="true" title="Select Staff role to enable division">
+                                <option value="">Select division</option>
+                                @foreach ($divisions as $division)
+                                    <option value="{{ $division->id }}">{{ $division->divisi }}</option>
+                                @endforeach
+                            </select>
+                            <p id="division-field-hint" class="small text-muted mb-0">Select role first. Division is only required for staff (engineer).</p>
                         </div>
                     </div>
                 </div>
@@ -91,20 +122,20 @@
                 divisionSelect.setAttribute('required', 'required');
                 divisionSelect.classList.remove('opacity-50', 'bg-light');
                 if (divisionHint) {
-                    divisionHint.textContent = 'Wajib untuk staff (engineer).';
+                    divisionHint.textContent = 'Required for staff (engineer).';
                 }
             } else {
                 divisionSelect.value = '';
                 divisionSelect.disabled = true;
                 divisionSelect.setAttribute('aria-disabled', 'true');
-                divisionSelect.setAttribute('title', 'Role executive/director tidak memakai divisi operasional');
+                divisionSelect.setAttribute('title', 'Executive/Director roles do not use operational division');
                 divisionSelect.removeAttribute('required');
                 divisionSelect.classList.add('opacity-50', 'bg-light');
                 if (divisionHint) {
                     if (!key) {
-                        divisionHint.textContent = 'Pilih role terlebih dahulu. Divisi hanya untuk staff (engineer).';
+                        divisionHint.textContent = 'Select role first. Division is only required for staff (engineer).';
                     } else {
-                        divisionHint.textContent = 'Role executive & director tidak memilih divisi. Field ini dinonaktifkan.';
+                        divisionHint.textContent = 'Executive & Director do not select division. This field is disabled.';
                     }
                 }
             }

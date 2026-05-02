@@ -8,6 +8,7 @@ use App\Models\Statussdm;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -21,6 +22,7 @@ class UpdateProfileController extends Controller
     public function __invoke(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        abort_unless((string) Auth::id() === (string) $user->id, 403);
 
         if ($request->input('id_status_sdm') === '') {
             $request->merge(['id_status_sdm' => null]);
@@ -38,7 +40,7 @@ class UpdateProfileController extends Controller
                 'min:8',
             ],
             'nik' => [
-                'required',
+                'nullable',
                 'string',
                 'max:20',
                 Rule::unique('users', 'nik')->ignore($user->id, 'id'),
@@ -54,7 +56,7 @@ class UpdateProfileController extends Controller
                 Rule::unique('users', 'no_telp')->ignore($user->id, 'id'),
             ],
             'tgl_lahir' => ['required', 'date'],
-            'tgl_masuk' => ['required', 'date'],
+            'tgl_masuk' => ['nullable', 'date'],
             'id_graduate' => ['required'],
         ], 'director.profile.edit', $id);
 
@@ -67,6 +69,11 @@ class UpdateProfileController extends Controller
         } else {
             unset($validate['password']);
         }
+
+        // Profile edit (self service): core HR fields remain immutable.
+        $validate['nik'] = $user->nik;
+        $validate['id_status_sdm'] = $user->id_status_sdm;
+        $validate['tgl_masuk'] = $user->tgl_masuk;
 
         Statussdm::finalizeEmploymentStatusValidated($validate, $user, $request);
 

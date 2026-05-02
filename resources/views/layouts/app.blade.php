@@ -27,7 +27,6 @@
             }
         })();
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     @yield('css')
     <link rel="stylesheet" href="{{ asset('build/css/global.css') }}">
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])

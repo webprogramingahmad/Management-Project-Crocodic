@@ -110,6 +110,105 @@ function taskDescriptionToHtml(raw) {
     return out.replace(/\r\n|\r|\n/g, "<br>");
 }
 
+function formatBalanceSeconds(seconds) {
+    if (seconds == null || Number.isNaN(Number(seconds))) {
+        return "-";
+    }
+    const value = Number(seconds);
+    const abs = Math.abs(value);
+    const h = Math.floor(abs / 3600);
+    const m = Math.floor((abs % 3600) / 60);
+    const s = abs % 60;
+    const hms =
+        String(h).padStart(2, "0") +
+        ":" +
+        String(m).padStart(2, "0") +
+        ":" +
+        String(s).padStart(2, "0");
+    if (value < 0) {
+        return "-" + hms;
+    }
+    return hms;
+}
+
+function setModalTimeTrackingFromCard(card) {
+    const progressEl = document.querySelector(".modal-progress-time");
+    const revisionsWrap = document.querySelector(".modal-revision-times");
+    if (!progressEl || !revisionsWrap) return;
+
+    const progressRaw = card.getAttribute("data-task-progress-balance-seconds");
+    progressEl.textContent = formatBalanceSeconds(
+        progressRaw !== null && progressRaw !== "" ? Number(progressRaw) : null
+    );
+
+    let cycles = [];
+    const cyclesAttr = card.getAttribute("data-task-revision-cycles-json");
+    if (cyclesAttr) {
+        try {
+            const parsed = JSON.parse(cyclesAttr);
+            if (Array.isArray(parsed)) {
+                cycles = parsed;
+            }
+        } catch (e) {
+            cycles = [];
+        }
+    }
+
+    if (cycles.length === 0) {
+        revisionsWrap.innerHTML =
+            '<div class="small"><span class="text-muted">Revision:</span> <span class="fw-semibold">-</span></div>';
+        return;
+    }
+
+    revisionsWrap.innerHTML = cycles
+        .map((c) => {
+            const n =
+                c && c.cycle_number != null && !Number.isNaN(Number(c.cycle_number))
+                    ? Number(c.cycle_number)
+                    : 0;
+            const balance =
+                c && c.balance_seconds != null && !Number.isNaN(Number(c.balance_seconds))
+                    ? Number(c.balance_seconds)
+                    : null;
+            return (
+                '<div class="small mb-1"><span class="text-muted">Revision ' +
+                n +
+                ':</span> <span class="fw-semibold">' +
+                escapeHtml(formatBalanceSeconds(balance)) +
+                "</span></div>"
+            );
+        })
+        .join("");
+}
+
+function updateTaskTrackingDataset(card, payload) {
+    if (!card || !payload) return;
+    if (Object.prototype.hasOwnProperty.call(payload, "progress_balance_seconds")) {
+        const v = payload.progress_balance_seconds;
+        card.setAttribute(
+            "data-task-progress-balance-seconds",
+            v == null ? "" : String(v)
+        );
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, "revision_cycles")) {
+        card.setAttribute(
+            "data-task-revision-cycles-json",
+            JSON.stringify(Array.isArray(payload.revision_cycles) ? payload.revision_cycles : [])
+        );
+    }
+
+    // Jika modal detail sedang buka untuk task ini, refresh data tracking realtime.
+    var modal = document.getElementById("detail-task");
+    if (modal && modal.classList.contains("show")) {
+        var editTaskIdInput = document.getElementById("edit_task_id");
+        var openedTaskId = editTaskIdInput ? editTaskIdInput.value : "";
+        var cardTaskId = card.getAttribute("data-task-id") || "";
+        if (openedTaskId && cardTaskId && openedTaskId === cardTaskId) {
+            setModalTimeTrackingFromCard(card);
+        }
+    }
+}
+
 function syncEditTaskModalFromCard(card) {
     var normal = document.getElementById("edit-task-normal-fields");
     var mainSubmit = document.getElementById("edit-task-submit-btn");
@@ -232,6 +331,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             setModalTaskDescriptionFromCard(card);
+            setModalTimeTrackingFromCard(card);
 
             var editLink = document.getElementById("edit-task-link");
             if (editLink) {
@@ -501,7 +601,8 @@ window.refreshTaskRunningTimerAfterStatus = function (
     columnItemEl,
     deadlineIso,
     showTimer,
-    frozenRemainMs
+    frozenRemainMs,
+    trackingPayload
 ) {
     if (!columnItemEl) {
         return;
@@ -522,6 +623,7 @@ window.refreshTaskRunningTimerAfterStatus = function (
         el.removeAttribute("data-deadline");
         el.setAttribute("data-frozen-ms", String(frozenNum));
         updateOneTaskRunningTimer(el);
+        updateTaskTrackingDataset(columnItemEl, trackingPayload);
         return;
     }
     if (hasLive) {
@@ -529,6 +631,7 @@ window.refreshTaskRunningTimerAfterStatus = function (
         el.removeAttribute("data-frozen-ms");
         el.setAttribute("data-deadline", deadlineIso);
         updateOneTaskRunningTimer(el);
+        updateTaskTrackingDataset(columnItemEl, trackingPayload);
         return;
     }
     el.classList.add("d-none");
@@ -536,6 +639,8 @@ window.refreshTaskRunningTimerAfterStatus = function (
     el.removeAttribute("data-frozen-ms");
     el.textContent = "--:--:--";
     el.classList.remove("task-running-timer--ok", "task-running-timer--late");
+
+    updateTaskTrackingDataset(columnItemEl, trackingPayload);
 };
 
 // Fungsi untuk update data-task-status pada card dan status di modal detail

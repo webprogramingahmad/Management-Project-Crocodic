@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -15,6 +16,7 @@ class UploadpictProfileController extends Controller
     public function __invoke(Request $request, $id)
     {
         $user = User::findOrFail($id);
+        abort_unless((string) Auth::id() === (string) $user->id, 403);
 
         $request->validate([
             'avatar' => 'required|image|max:5120',

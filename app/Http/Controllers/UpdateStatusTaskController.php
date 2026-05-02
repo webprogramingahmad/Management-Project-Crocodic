@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\StatusTask;
 use App\Models\Task;
+use App\Models\TaskRevisionCycle;
 use App\Support\StatusSdmManager;
+use App\Support\TaskAuditLogger;
 use App\Support\TaskBoardAccess;
 use App\Support\TaskRunningTimer;
 use Illuminate\Http\Request;
@@ -23,7 +25,17 @@ class UpdateStatusTaskController extends Controller
 
         $actor = Auth::user();
         $actor->loadMissing('role');
-        abort_if($actor->role?->role === 'executive', 403);
+        $actorRole = $actor->role?->role;
+        if ($actorRole === 'executive') {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'executive_monitor_only',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $id,
+            ]);
+            abort(403);
+        }
 
         $task = Task::with(['status', 'user.role'])->findOrFail($id);
 
@@ -45,53 +57,142 @@ class UpdateStatusTaskController extends Controller
         $newRevision = TaskRunningTimer::isRevisionStatus($incoming);
         $incomingComplete = TaskRunningTimer::isCompleteStatus($incoming);
 
-        // Director pada task milik staff: hanya boleh putuskan Review -> Revision/Complete via form khusus.
         $isOwner = (string) $task->id_user === (string) $actor->id;
-        if ($actor->role?->role === 'director' && ! $isOwner) {
-            abort_if(($task->user?->role?->role ?? null) !== 'staff', 403);
-            abort_if(! $oldReview || (! $newRevision && ! $incomingComplete), 403);
+        // Staff hanya boleh ubah status task miliknya sendiri.
+        if ($actorRole === 'staff' && ! $isOwner) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'staff_non_owner',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+                'task_owner_id' => $task->id_user,
+            ]);
+            abort(403);
+        }
+
+        // Director hanya boleh ubah status task miliknya sendiri via endpoint ini.
+        // Perubahan task staff oleh director dilakukan via endpoint review decision khusus.
+        if ($actorRole === 'director' && ! $isOwner) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'director_non_owner',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+                'task_owner_id' => $task->id_user,
+            ]);
+            abort(403);
         }
 
         // Revision hanya lewat keputusan review (bukan drag).
-        abort_if($newRevision, 403);
+        if ($newRevision) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'revision_only_via_review_decision',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+            ]);
+            abort(403);
+        }
 
-        // Review → Complete hanya lewat form director (bukan drag).
-        if ($oldReview) {
-            abort_if($incomingComplete, 403);
+        // Staff tidak boleh memindahkan task ke Complete.
+        if ($actorRole === 'staff' && $incomingComplete) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'staff_cannot_complete',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+            ]);
+            abort(403);
+        }
+
+        // Review → Complete hanya boleh untuk director pada task miliknya sendiri.
+        if ($oldReview && $incomingComplete) {
+            if (! ($actorRole === 'director' && $isOwner)) {
+                TaskAuditLogger::warning('task_update_status', [
+                    'result' => 'forbidden',
+                    'reason' => 'review_to_complete_requires_director_owner',
+                    'actor_id' => $actor->id,
+                    'actor_role' => $actorRole,
+                    'task_id' => $task->id,
+                ]);
+                abort(403);
+            }
         }
 
         // In progress tidak boleh kembali ke To Do.
         if ($oldProgress && $incomingTodo) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'progress_cannot_return_todo',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+            ]);
             abort(403);
         }
 
         // Review tidak boleh kembali ke In progress atau To Do.
         if ($oldReview && ($newProgress || $incomingTodo)) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'review_cannot_return_progress_or_todo',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+            ]);
             abort(403);
         }
 
         // Complete bersifat final (tidak boleh mundur ke status lain).
         if ($oldComplete && ! $incomingComplete) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'complete_is_final',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+            ]);
             abort(403);
         }
 
         // Revision -> Review hanya untuk pemilik task itu sendiri.
         if ($oldRevision && $newReview && ! $isOwner) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'forbidden',
+                'reason' => 'revision_to_review_non_owner',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+            ]);
             abort(403);
+        }
+
+        if ($oldRevision && $newReview) {
+            TaskRevisionCycle::query()
+                ->where('id_task', $task->id)
+                ->whereNull('exited_revision_at')
+                ->latest('entered_revision_at')
+                ->limit(1)
+                ->update(['exited_revision_at' => now()]);
         }
 
         $task->id_status = $incoming->id;
 
         if ($newProgress) {
-            $task->running_started_at = now();
-            $task->running_review_at = null;
+            if (!$task->running_started_at) {
+                $task->running_started_at = now();
+            }
             $task->revision_deadline_at = null;
             $task->revision_hours = null;
-        } elseif ($newReview && ($oldProgress || $oldRevision)) {
-            $task->running_review_at = now();
+        } elseif ($newReview && $oldProgress) {
+            if (!$task->running_review_at) {
+                $task->running_review_at = now();
+            }
         } elseif (!$newProgress && !$newReview && !$newRevision) {
-            $task->running_started_at = null;
-            $task->running_review_at = null;
             $task->revision_deadline_at = null;
             $task->revision_hours = null;
         }
@@ -105,6 +206,15 @@ class UpdateStatusTaskController extends Controller
         }
 
         $frozenMs = TaskRunningTimer::frozenRemainMsForReview($task);
+        TaskAuditLogger::info('task_update_status', [
+            'result' => 'success',
+            'actor_id' => $actor->id,
+            'actor_role' => $actorRole,
+            'task_id' => $task->id,
+            'project_id' => $task->id_project,
+            'from_status' => $oldStatus?->class ?? $oldStatus?->status,
+            'to_status' => $incoming->class ?? $incoming->status,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -112,6 +222,8 @@ class UpdateStatusTaskController extends Controller
             'deadline_iso' => TaskRunningTimer::shouldShowLiveTimer($task) ? TaskRunningTimer::deadlineIsoString($task) : null,
             'show_timer' => TaskRunningTimer::shouldShowTimer($task),
             'frozen_remain_ms' => $frozenMs,
+            'progress_balance_seconds' => TaskRunningTimer::progressBalanceSeconds($task),
+            'revision_cycles' => TaskRunningTimer::revisionCycleBalances($task),
         ]);
     }
 }

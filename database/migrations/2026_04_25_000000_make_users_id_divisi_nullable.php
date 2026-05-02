@@ -12,6 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         Schema::table('users', function (Blueprint $table) {
             $table->dropForeign(['id_divisi']);
         });
@@ -31,6 +35,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         if (DB::table('users')->whereNull('id_divisi')->exists()) {
             throw new \RuntimeException('Cannot rollback: set id_divisi for all users with null first.');
         }

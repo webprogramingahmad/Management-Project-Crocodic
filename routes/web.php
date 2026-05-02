@@ -82,6 +82,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\OpenDashboardNotificationController;
 
 Route::get('/search', [SearchController::class, 'index'])->name('search.route');
 Route::get('/send-email', [VerificationController::class, 'showEmailForm'])->name('email.form');
@@ -261,4 +262,5 @@ Route::view('/tumbal', 'tumbal')->name('tumbal');
 
 Route::middleware('auth')->group(function () {
     Route::post('/profile-uploadpict/{id}', UploadpictProfileController::class)->name('upload.avatar');
+    Route::get('/dashboard/notifications/open', OpenDashboardNotificationController::class)->name('dashboard.notifications.open');
 });

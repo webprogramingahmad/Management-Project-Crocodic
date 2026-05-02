@@ -38,6 +38,10 @@ DB_PASSWORD=</code></pre>
 <pre><code>php artisan serve</code></pre>
 <p class="muted">Masuk ke: <code>http://localhost:8000</code></p>
 
+## Runbook Operasional
+
+- Troubleshooting status SDM & task: `docs/runbooks/sdm-task-troubleshooting.md`
+
 <h2>👤 Akun Login</h2>
 <p class="text-muted">Gunakan akun berikut untuk mengakses sistem sesuai peran masing-masing.</p>
 <table class="table table-bordered align-middle text-center">

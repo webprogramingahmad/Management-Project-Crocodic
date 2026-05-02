@@ -34,7 +34,7 @@ class TransferProjectTaskController extends Controller
             'description' => 'nullable|string|max:5000',
         ]);
 
-        $statusTodo = StatusTask::where('status', 'To Do')->first();
+        $statusTodo = StatusTask::firstByClass('todo');
 
         $standbyDiff = TaskDifficulty::where('difficulty', 'Stand By')->first();
         if ($standbyDiff) {

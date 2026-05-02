@@ -562,8 +562,16 @@ html[data-theme="dark"] .btn-close {
    ========================================================= */
 html[data-theme="dark"] .card:not(.dashboard-notify-card) {
     background-color: var(--bs-card-bg);
-    border-color: var(--bs-card-border-color);
+    border-color: rgba(161, 161, 170, 0.35) !important;
     color: var(--dash-text);
+}
+
+/* Menyamakan border komponen lama yang masih inline #E0E0E0CE agar tidak terlalu terang */
+html[data-theme="dark"] [style*="border-color:#E0E0E0CE"],
+html[data-theme="dark"] [style*="border-color: #E0E0E0CE"],
+html[data-theme="dark"] [style*="border: 1px solid #E0E0E0CE"],
+html[data-theme="dark"] [style*="border:1px solid #E0E0E0CE"] {
+    border-color: rgba(161, 161, 170, 0.35) !important;
 }
 
 html[data-theme="dark"] .card:not(.dashboard-notify-card) .card-header,

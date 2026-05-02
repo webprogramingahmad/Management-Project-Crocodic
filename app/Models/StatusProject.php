@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -10,6 +11,16 @@ use Illuminate\Support\Str;
 class StatusProject extends Model
 {
     use HasFactory, Notifiable;
+
+    /**
+     * @var array<string, list<string>>
+     */
+    private const LEGACY_LABELS = [
+        'todo' => ['To do', 'To Do', 'Todo'],
+        'running' => ['Running'],
+        'maintenance' => ['Maintenance'],
+        'completed' => ['Completed', 'Complete'],
+    ];
 
     public $incrementing = false;
     protected $keyType = 'string';
@@ -67,5 +78,30 @@ class StatusProject extends Model
     public function projects()
     {
         return $this->hasMany(Project::class);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function legacyLabelsForClass(string $class): array
+    {
+        return self::LEGACY_LABELS[strtolower($class)] ?? [];
+    }
+
+    public function scopeWhereClassOrLegacy(Builder $query, string $class): Builder
+    {
+        $labels = self::legacyLabelsForClass($class);
+
+        return $query->where(function (Builder $q) use ($class, $labels): void {
+            $q->where('class', strtolower($class));
+            if ($labels !== []) {
+                $q->orWhereIn('status', $labels);
+            }
+        });
+    }
+
+    public static function firstByClass(string $class): ?self
+    {
+        return self::query()->whereClassOrLegacy($class)->first();
     }
 }

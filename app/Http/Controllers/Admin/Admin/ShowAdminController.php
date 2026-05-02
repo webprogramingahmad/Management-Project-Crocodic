@@ -17,7 +17,7 @@ class ShowAdminController extends Controller
         $user = User::with('division', 'role')->findOrFail($id);
 
         $acceptedStatus = StatusAdministration::where('name', 'accept')->first();
-        $completeStatus = StatusTask::where('status', 'Complete')->first();
+        $completeStatus = StatusTask::firstByClass('complete');
 
         $accepted_absent_count = $user->administrations()
             ->where('id_status', $acceptedStatus?->id)

@@ -49,6 +49,21 @@
         <div class="col-7 fw-bold modal-timeline"></div>
     </div>
 
+    <!-- Time Tracking -->
+    <div class="col-12 info-row d-flex align-items-start mb-2 modal-time-tracking-row">
+        <div class="col-5 d-flex align-items-center gap-2 text-muted">
+            <i class="bi bi-stopwatch"></i>
+            <span>Time Tracking</span>
+        </div>
+        <div class="col-7">
+            <div class="small mb-1">
+                <span class="text-muted">In Progress:</span>
+                <span class="fw-semibold modal-progress-time">-</span>
+            </div>
+            <div class="modal-revision-times"></div>
+        </div>
+    </div>
+
     <!-- Keterangan / tautan (opsional) -->
     <div class="col-12 info-row d-flex align-items-start mb-0 modal-task-description-row d-none">
         <div class="col-5 d-flex align-items-center gap-2 text-muted">

@@ -8,6 +8,7 @@ use App\Models\StatusTask;
 use App\Models\Task;
 use App\Models\TaskDifficulty;
 use App\Support\StatusSdmManager;
+use App\Support\TaskAuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,7 +26,7 @@ class StoreTaskController extends Controller
             'description' => 'nullable|string|max:5000',
         ]);
 
-        $statusTodo = StatusTask::where('status', 'To Do')->first();
+        $statusTodo = StatusTask::firstByClass('todo');
 
         $userId = Auth::user()->id;
 
@@ -36,7 +37,7 @@ class StoreTaskController extends Controller
                 ->delete();
         }
 
-        Task::create([
+        $task = Task::create([
             'name' => $request->name,
             'description' => $request->input('description') ?: null,
             'id_difficulty' => $request->id_difficulty,
@@ -47,6 +48,14 @@ class StoreTaskController extends Controller
         ]);
 
         StatusSdmManager::syncForUser(Auth::user());
+        TaskAuditLogger::info('task_create', [
+            'result' => 'success',
+            'actor_id' => $userId,
+            'actor_role' => 'executive',
+            'task_id' => $task->id,
+            'project_id' => $task->id_project,
+            'to_status' => 'todo',
+        ]);
 
         return redirect()->route('executive.tasks.index')->with('success', 'Task berhasil dibuat');
     }

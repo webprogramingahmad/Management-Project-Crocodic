@@ -33,7 +33,7 @@ class StoreProjectTaskController extends Controller
             'description' => 'nullable|string|max:5000',
         ]);
 
-        $statusTodo = StatusTask::where('status', 'To Do')->first();
+        $statusTodo = StatusTask::firstByClass('todo');
 
         $userId = Auth::user()->id;
 

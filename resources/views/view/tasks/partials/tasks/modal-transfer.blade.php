@@ -62,7 +62,8 @@
             </div>
 
             <div class="modal-footer border-0 pt-1">
-                <button type="submit" class="btn btn-submit task-modal-submit">Submit</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-submit task-modal-submit">Transfer Task</button>
             </div>
         </form>
     </div>

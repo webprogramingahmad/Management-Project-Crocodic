@@ -77,12 +77,7 @@
 
                         <div class="mb-3">
                             <label class="form-label text-muted">Status Project</label>
-                            <select name="id_status" class="form-select" required>
-                                <option disabled selected>-- Select Status --</option>
-                                @foreach($statusprojects as $status)
-                                    <option value="{{ $status->id }}">{{ $status->status }}</option>
-                                @endforeach
-                            </select>
+                            <input type="text" class="form-control" value="To do" readonly>
                         </div>
 
                         <div>

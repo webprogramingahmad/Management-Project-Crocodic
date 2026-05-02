@@ -65,12 +65,9 @@
                 </div>
             </div>
 
-            @if ($errors->any())
-                @dd($errors)
-            @endif
-
             <div class="modal-footer border-0 pt-1">
-                <button type="submit" class="btn btn-submit task-modal-submit">Submit</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-submit task-modal-submit">Create Task</button>
             </div>
         </form>
         <script>

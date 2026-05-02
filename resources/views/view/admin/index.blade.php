@@ -42,6 +42,11 @@
             flex-shrink: 0;
         }
 
+        .admin-index-outer-card {
+            border-radius: 15px !important;
+            border-color: rgba(224, 224, 224, 0.7) !important;
+        }
+
         .admin-index-table-scroll {
             flex: 1 1 auto;
             min-height: 0;
@@ -68,13 +73,16 @@
             color: var(--dash-text, #f4f4f5);
             border-color: var(--dash-border, #3f3f46);
         }
+
+        html[data-theme="dark"] .admin-index-outer-card {
+            border-color: rgba(161, 161, 170, 0.35) !important;
+        }
     </style>
 @endsection
 
 @section('content')
     <div class="admin-index-page">
-    <div class="card admin-index-card gx-0 py-2 px-2 border"
-        style="border-radius:15px; border-color:#E0E0E0CE !important;">
+    <div class="card admin-index-card admin-index-outer-card gx-0 py-2 px-2 border">
         <div class="admin-index-toolbar container-fluid py-4 px-3">
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div class="d-flex gap-2">
@@ -90,14 +98,14 @@
                             class="d-flex justify-content-between align-items-center btn btn-white border-secondary rounded-3 dropdown-toggle"
                             style="width: 135px;" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <span id="selectedProject" class="text-truncate">
-                                {{ $selectedDivision?->divisi ?? 'Filter by divisi' }}
+                                {{ $selectedDivision?->divisi ?? 'Filter by division' }}
                             </span>
                             <i id="dropdownIcon" class=" ms-2"></i>
                         </button>
                         <ul class="dropdown-menu" id="projectDropdown">
                             <li>
                                 <a class="dropdown-item" href="{{ route('executive.accounts.index') }}">
-                                    All Divisi
+                                    All Divisions
                                 </a>
                             </li>
                             @foreach ($divisions as $division)
@@ -113,7 +121,7 @@
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{{ route('executive.accounts.create') }}" class="btn btn-dark rounded"><i class="bi bi-plus"></i>
-                        Add New SDM
+                        Add New Account
                     </a>
                 </div>
             </div>
@@ -132,6 +140,9 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        $currentUserId = (string) auth()->id();
+                    @endphp
                     @foreach ($users as $user)
                         <tr>
                             <td class="text-center fw-semibold" style="width: 8%;">{{ $loop->iteration }}</td>
@@ -148,18 +159,23 @@
                             <td class="fw-semibold" style="width: 22%;">
                                 <div class="d-flex justify-content-center align-items-center">
                                     <a href="{{ route('executive.accounts.show', $user->id) }}"
-                                        class="btn btn-primary rounded mb-1 mb-lg-0 me-lg-1">
-                                        <i class="bi bi-eye"></i>
-                                        View
+                                        class="btn btn-primary rounded-2 mb-1 mb-lg-0 me-lg-1 d-inline-flex align-items-center gap-1">
+                                        <i class="bi bi-eye"></i><span>View</span>
                                     </a>
-                                    <form action="{{ route('executive.accounts.destroy', $user->id) }}" method="POST"
-                                        onsubmit="return confirm('Yakin ingin menghapus user ini?')" style="display: inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger rounded">
-                                            <i class="bi bi-trash"></i>Delete
+                                    @if ((string) $user->id === $currentUserId)
+                                        <button type="button" class="btn btn-secondary rounded-2 d-inline-flex align-items-center gap-1" disabled title="You cannot delete your own account">
+                                            <i class="bi bi-trash"></i><span>Delete</span>
                                         </button>
-                                    </form>
+                                    @else
+                                        <form action="{{ route('executive.accounts.destroy', $user->id) }}" method="POST"
+                                            onsubmit="return confirm('Are you sure you want to delete this account?')" style="display: inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger rounded-2 d-inline-flex align-items-center gap-1">
+                                                <i class="bi bi-trash"></i><span>Delete</span>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

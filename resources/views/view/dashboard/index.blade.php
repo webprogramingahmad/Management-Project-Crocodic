@@ -1091,8 +1091,8 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                     @else
                         <div class="tab-btns dashboard-left-tab-btns mb-4">
                             <button type="button" class="btn btn-custom" data-target="#tab-ready">Ready</button>
-                            <button type="button" class="btn btn-custom" data-target="#tab-standby">Stand by</button>
-                            <button type="button" class="btn btn-custom" data-target="#tab-notready">Not ready</button>
+                            <button type="button" class="btn btn-custom" data-target="#tab-standby">Stand By</button>
+                            <button type="button" class="btn btn-custom" data-target="#tab-notready">Not Ready</button>
                             <button type="button" class="btn btn-custom"
                                 data-target="#tab-complete">Complete</button>
                             <button type="button" class="btn btn-custom"
@@ -1102,7 +1102,7 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                         <div class="dashboard-left-tab-panels">
                         <div id="tab-ready" class="tab-container dashboard-left-tab-panel">
                             @if($ready->isEmpty())
-                                @include('components.empty-state', ['icon' => 'bi bi-file-earmark-check-fill', 'text' => 'No tasks ready'])
+                                @include('components.empty-state', ['icon' => 'bi bi-file-earmark-check-fill', 'text' => 'No ready tasks'])
                             @else
                                 <div class="row g-3">
                                     @foreach($ready as $task)
@@ -1126,7 +1126,11 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                                 {{ ucwords($task->user->name ?? '-') }}
                                                             </p>
                                                             <p class="card-subtitle m-0">
-                                                                {{ ucwords($task->user->division->divisi ?? '-') }}
+                                                                @if (($task->user?->role?->role ?? null) === 'staff')
+                                                                    {{ ucwords($task->user?->division?->divisi ?? '-') }}
+                                                                @else
+                                                                    {{ \App\Support\RoleDisplay::label($task->user?->role?->role ?? null) }}
+                                                                @endif
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1158,7 +1162,7 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
 
                         <div id="tab-standby" class="tab-container dashboard-left-tab-panel d-none">
                             @if($standby->isEmpty())
-                                @include('components.empty-state', ['icon' => 'fa-solid fa-users', 'text' => 'No employee yet'])
+                                @include('components.empty-state', ['icon' => 'fa-solid fa-users', 'text' => 'No staff in Stand By'])
                             @else
                                 <div class="row g-3">
                                     @foreach($standby as $user)
@@ -1182,7 +1186,11 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                                 {{ ucwords($user->name) }}
                                                             </p>
                                                             <p class="card-subtitle m-0">
-                                                                {{ ucwords($user->division->divisi ?? '-') }}
+                                                                @if (($user->role?->role ?? null) === 'staff')
+                                                                    {{ ucwords($user->division?->divisi ?? '-') }}
+                                                                @else
+                                                                    {{ \App\Support\RoleDisplay::label($user->role?->role ?? null) }}
+                                                                @endif
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1196,7 +1204,7 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
 
                         <div id="tab-notready" class="tab-container dashboard-left-tab-panel d-none">
                             @if($notready->isEmpty())
-                                @include('components.empty-state', ['icon' => 'fa-solid fa-users', 'text' => 'No employee yet'])
+                                @include('components.empty-state', ['icon' => 'fa-solid fa-users', 'text' => 'No staff in Not Ready'])
                             @else
                                 <div class="row g-3">
                                     @foreach ($notready as $user)
@@ -1220,7 +1228,11 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                                 {{ ucwords($user->name) }}
                                                             </p>
                                                             <p class="card-subtitle m-0">
-                                                                {{ ucwords($user->division->divisi ?? '-') }}
+                                                                @if (($user->role?->role ?? null) === 'staff')
+                                                                    {{ ucwords($user->division?->divisi ?? '-') }}
+                                                                @else
+                                                                    {{ \App\Support\RoleDisplay::label($user->role?->role ?? null) }}
+                                                                @endif
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1240,7 +1252,7 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                         <div class="empty-icon mb-2 d-flex align-items-center justify-content-center">
                                             <i class="bi bi-clipboard-x fs-1"></i>
                                         </div>
-                                        <div class="empty-text">No completed</div>
+                                        <div class="empty-text">No completed tasks</div>
                                     </div>
                                 </div>
                             @else
@@ -1266,7 +1278,11 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                                 {{ ucwords($task->user->name ?? '-') }}
                                                             </p>
                                                             <p class="card-subtitle m-0">
-                                                                {{ ucwords($task->user->division->divisi ?? '-') }}
+                                                                @if (($task->user?->role?->role ?? null) === 'staff')
+                                                                    {{ ucwords($task->user?->division?->divisi ?? '-') }}
+                                                                @else
+                                                                    {{ \App\Support\RoleDisplay::label($task->user?->role?->role ?? null) }}
+                                                                @endif
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1298,7 +1314,7 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
 
                         <div id="tab-absent" class="tab-container dashboard-left-tab-panel d-none">
                             @if($absent->isEmpty())
-                                @include('components.empty-state', ['icon' => 'fas fa-users-slash', 'text' => 'No absent today'])
+                                @include('components.empty-state', ['icon' => 'fas fa-users-slash', 'text' => 'No absent staff today'])
                             @else
                                 <div class="row g-3">
                                     @foreach ($absent as $user)
@@ -1445,9 +1461,14 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                     <div class="dashboard-notify-row-top">
                     <div class="card dashboard-notify-card p-0 m-0" style="border-radius:15px; background-color:#7DB546 !important; border: none;">
                         <section class="task-section dashboard-notify-section p-3 rounded-4">
-                            <div class="d-flex align-items-center gap-1 mb-2 dash-notify-heading flex-shrink-0">
-                                <i class="bi bi-file-earmark-check-fill" style="font-size:22px"></i>
-                                <h2 class="fs-6 fw-semibold m-0" style="font-family:montserrat">Tasks</h2>
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2 dash-notify-heading flex-shrink-0">
+                                <div class="d-flex align-items-center gap-1">
+                                    <i class="bi bi-file-earmark-check-fill" style="font-size:22px"></i>
+                                    <h2 class="fs-6 fw-semibold m-0" style="font-family:montserrat">Tasks</h2>
+                                </div>
+                                @if ($tasks->count() > 0)
+                                    <span class="badge rounded-pill bg-white text-dark fw-semibold">{{ $tasks->count() }}</span>
+                                @endif
                             </div>
                             <div class="dashboard-notify-scroll" style="background-color:#7DB546;">
                                 @if($tasks->isEmpty())
@@ -1484,9 +1505,14 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
 
                     <div class="card dashboard-notify-card p-0 m-0" style="border-radius:15px; background-color:#FFB42E; border: none;">
                         <section class="project-section dashboard-notify-section p-3 rounded-4">
-                            <div class="d-flex align-items-center gap-1 mb-2 dash-notify-heading flex-shrink-0">
-                                <i class="bi bi-kanban-fill" style="font-size:22px"></i>
-                                <h2 class="fs-6 fw-semibold m-0" style="font-family:montserrat">Project</h2>
+                            <div class="d-flex align-items-center justify-content-between gap-2 mb-2 dash-notify-heading flex-shrink-0">
+                                <div class="d-flex align-items-center gap-1">
+                                    <i class="bi bi-kanban-fill" style="font-size:22px"></i>
+                                    <h2 class="fs-6 fw-semibold m-0" style="font-family:montserrat">Project</h2>
+                                </div>
+                                @if ($projects->count() > 0)
+                                    <span class="badge rounded-pill bg-white text-dark fw-semibold">{{ $projects->count() }}</span>
+                                @endif
                             </div>
                             <div class="dashboard-notify-scroll" style="background-color:#FFB42E;">
                                 @if($projects->isEmpty())
@@ -1559,10 +1585,25 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                     ? $adm->start_date->diffInDays($adm->end_date) + 1
                                                     : null;
                                                 $admShowRoute = $role === 'director'
-                                                    ? route('director.administration.show', $adm->id)
-                                                    : route('staff.administration.show', $adm->id);
+                                                    ? route('director.administration.show', $adm->id, false)
+                                                    : route('staff.administration.show', $adm->id, false);
+                                                $admStatusName = strtolower($adm->status->name ?? 'pending');
+                                                $admStatusLabel = match ($admStatusName) {
+                                                    'accept' => 'Accepted',
+                                                    'reject' => 'Rejected',
+                                                    default => 'Pending',
+                                                };
+                                                $admStatusStyle = match ($admStatusName) {
+                                                    'accept' => 'background-color:#7DB546;color:#fff;min-width:auto;line-height:1.3;',
+                                                    'reject' => 'background-color:#C2410C;color:#fff;min-width:auto;line-height:1.3;',
+                                                    default => 'background-color:#FFB42E;color:#fff;min-width:auto;line-height:1.3;',
+                                                };
+                                                $admNotificationOpenUrl = route('dashboard.notifications.open', [
+                                                    'key' => $note->read_key,
+                                                    'to' => $admShowRoute,
+                                                ]);
                                             @endphp
-                                            <a href="{{ $admShowRoute }}"
+                                            <a href="{{ $admNotificationOpenUrl }}"
                                                 class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
                                                 <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
                                                     <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
@@ -1570,7 +1611,7 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                             {{ ucwords($adm->user->name ?? '-') }}
                                                         </p>
                                                         <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
-                                                            style="background-color:#FFB42E;color:#fff;min-width:auto;line-height:1.3;">Pending</span>
+                                                            style="{{ $admStatusStyle }}">{{ $admStatusLabel }}</span>
                                                     </div>
                                                     <p class="small mb-1" style="line-height:1.35;">
                                                         <span class="text-muted">Permission :</span>
@@ -1598,10 +1639,14 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                             @php
                                                 $proj = $note->project;
                                                 $projRoute = $role === 'director'
-                                                    ? route('director.project.edit', $proj->id)
-                                                    : route('staff.project.tasks.index', $proj->id);
+                                                    ? route('director.project.edit', $proj->id, false)
+                                                    : route('staff.project.tasks.index', $proj->id, false);
+                                                $projNotificationOpenUrl = route('dashboard.notifications.open', [
+                                                    'key' => $note->read_key,
+                                                    'to' => $projRoute,
+                                                ]);
                                             @endphp
-                                            <a href="{{ $projRoute }}"
+                                            <a href="{{ $projNotificationOpenUrl }}"
                                                 class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
                                                 <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
                                                     <p class="fw-semibold small mb-1 text-truncate" title="{{ ucwords($proj->name) }}">{{ ucwords($proj->name) }}</p>
@@ -1620,9 +1665,13 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                         @elseif ($note->kind === 'task_review')
                                             @php
                                                 $task = $note->task;
-                                                $taskRoute = route('director.tasks.index', ['project_id' => $task->id_project]);
+                                                $taskRoute = route('director.tasks.index', ['project_id' => $task->id_project], false);
+                                                $taskNotificationOpenUrl = route('dashboard.notifications.open', [
+                                                    'key' => $note->read_key,
+                                                    'to' => $taskRoute,
+                                                ]);
                                             @endphp
-                                            <a href="{{ $taskRoute }}"
+                                            <a href="{{ $taskNotificationOpenUrl }}"
                                                 class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
                                                 <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
                                                     <p class="fw-semibold small mb-1 text-truncate" title="{{ ucwords($task->name ?? '-') }}">
@@ -1639,18 +1688,20 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                     </p>
                                                     <div class="d-flex gap-1 flex-wrap align-items-center mt-auto">
                                                         <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
-                                                            style="background-color:#6FAEC9;color:#fff;min-width:auto;line-height:1.3;">Review</span>
-                                                        <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
-                                                            style="background-color:#FFB42E;color:#fff;min-width:auto;line-height:1.3;">Pending</span>
+                                                            style="background-color:#FFB42E;color:#fff;min-width:auto;line-height:1.3;">Pending Review</span>
                                                     </div>
                                                 </div>
                                             </a>
                                         @elseif ($note->kind === 'task_revision')
                                             @php
                                                 $task = $note->task;
-                                                $taskRoute = route('staff.tasks.index', ['project_id' => $task->id_project]);
+                                                $taskRoute = route('staff.tasks.index', ['project_id' => $task->id_project], false);
+                                                $taskNotificationOpenUrl = route('dashboard.notifications.open', [
+                                                    'key' => $note->read_key,
+                                                    'to' => $taskRoute,
+                                                ]);
                                             @endphp
-                                            <a href="{{ $taskRoute }}"
+                                            <a href="{{ $taskNotificationOpenUrl }}"
                                                 class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
                                                 <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
                                                     <p class="fw-semibold small mb-1 text-truncate" title="{{ ucwords($task->name ?? '-') }}">
@@ -1667,7 +1718,86 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                     </p>
                                                     <div class="d-flex gap-1 flex-wrap align-items-center mt-auto">
                                                         <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
-                                                            style="background-color:#C2410C;color:#fff;min-width:auto;line-height:1.3;">Revision</span>
+                                                            style="background-color:#C2410C;color:#fff;min-width:auto;line-height:1.3;">Revision Requested</span>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        @elseif ($note->kind === 'task_deadline_alert')
+                                            @php
+                                                $task = $note->task;
+                                                $taskRoute = $role === 'director'
+                                                    ? route('director.tasks.index', ['project_id' => $task->id_project])
+                                                    : route('staff.tasks.index', ['project_id' => $task->id_project]);
+                                                $balanceSeconds = (int) ($note->balance_seconds ?? 0);
+                                                $isOverdue = $balanceSeconds < 0;
+                                                $absSeconds = abs($balanceSeconds);
+                                                $h = str_pad((string) floor($absSeconds / 3600), 2, '0', STR_PAD_LEFT);
+                                                $m = str_pad((string) floor(($absSeconds % 3600) / 60), 2, '0', STR_PAD_LEFT);
+                                                $s = str_pad((string) ($absSeconds % 60), 2, '0', STR_PAD_LEFT);
+                                                $runningText = ($isOverdue ? '-' : '') . $h . ':' . $m . ':' . $s;
+                                                $alertLabel = $isOverdue ? 'Overdue' : 'Due < 30m';
+                                                $alertStyle = $isOverdue
+                                                    ? 'background-color:#C2410C;color:#fff;min-width:auto;line-height:1.3;'
+                                                    : 'background-color:#FFB42E;color:#fff;min-width:auto;line-height:1.3;';
+                                            @endphp
+                                            <a href="{{ $taskRoute }}"
+                                                class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
+                                                <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
+                                                    <p class="fw-semibold small mb-1 text-truncate" title="{{ ucwords($task->name ?? '-') }}">
+                                                        {{ ucwords($task->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-secondary mb-0 text-break" style="line-height:1.35;">
+                                                        {{ ucwords($task->project?->name ?? 'Stand By') }}
+                                                    </p>
+                                                    <p class="small text-muted mb-2 mt-1" style="line-height:1.35;">
+                                                        Running: <span class="fw-semibold">{{ $runningText }}</span>
+                                                    </p>
+                                                    <div class="d-flex gap-1 flex-wrap align-items-center mt-auto">
+                                                        <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
+                                                            style="{{ $alertStyle }}">{{ $alertLabel }}</span>
+                                                    </div>
+                                                </div>
+                                            </a>
+                                        @elseif ($note->kind === 'project_timeline_alert')
+                                            @php
+                                                $proj = $note->project;
+                                                $projRoute = $role === 'director'
+                                                    ? route('director.project.edit', $proj->id)
+                                                    : route('staff.project.tasks.index', $proj->id);
+                                                $balanceSeconds = (int) ($note->balance_seconds ?? 0);
+                                                $isOverdue = $balanceSeconds < 0;
+                                                $absSeconds = abs($balanceSeconds);
+                                                $h = str_pad((string) floor($absSeconds / 3600), 2, '0', STR_PAD_LEFT);
+                                                $m = str_pad((string) floor(($absSeconds % 3600) / 60), 2, '0', STR_PAD_LEFT);
+                                                $s = str_pad((string) ($absSeconds % 60), 2, '0', STR_PAD_LEFT);
+                                                $runningText = ($isOverdue ? '-' : '') . $h . ':' . $m . ':' . $s;
+                                                $phase = $note->phase ?? 'end';
+                                                $isStartPhase = $phase === 'start';
+                                                if ($isStartPhase) {
+                                                    $alertLabel = $isOverdue ? 'Start Overdue' : 'Starts < 24h';
+                                                } else {
+                                                    $alertLabel = $isOverdue ? 'Deadline Overdue' : 'Deadline < 24h';
+                                                }
+                                                $alertStyle = $isOverdue
+                                                    ? 'background-color:#C2410C;color:#fff;min-width:auto;line-height:1.3;'
+                                                    : 'background-color:#FFB42E;color:#fff;min-width:auto;line-height:1.3;';
+                                                $timeLabel = $isStartPhase ? 'Start in' : 'Ends in';
+                                            @endphp
+                                            <a href="{{ $projRoute }}"
+                                                class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
+                                                <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
+                                                    <p class="fw-semibold small mb-1 text-truncate" title="{{ ucwords($proj->name ?? '-') }}">
+                                                        {{ ucwords($proj->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-secondary mb-0 text-break" style="line-height:1.35;">
+                                                        Director: {{ ucwords($proj->director?->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-muted mb-2 mt-1" style="line-height:1.35;">
+                                                        {{ $timeLabel }}: <span class="fw-semibold">{{ $runningText }}</span>
+                                                    </p>
+                                                    <div class="d-flex gap-1 flex-wrap align-items-center mt-auto">
+                                                        <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
+                                                            style="{{ $alertStyle }}">{{ $alertLabel }}</span>
                                                     </div>
                                                 </div>
                                             </a>

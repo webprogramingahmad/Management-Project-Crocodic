@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Director\Tasks;
 
 use App\Http\Controllers\Controller;
+use App\Models\Administration;
 use App\Models\Project;
 use App\Models\StatusTask;
 use App\Models\TaskDifficulty;
 use App\Models\Task;
 use App\Models\User;
 use App\Support\StatusSdmManager;
+use App\Support\TaskAuditLogger;
 use App\Support\TaskBoardAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,8 +31,22 @@ class TransferTaskController extends Controller
         ]);
 
         TaskBoardAccess::assertCanUseProjectForTaskMutation(Auth::user(), (string) $request->id_project);
+        $today = now()->toDateString();
+        $isAssigneeAbsent = Administration::query()
+            ->where('id_user', $request->id_user)
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->whereHas('status', function ($q) {
+                $q->where('name', 'accept');
+            })
+            ->exists();
+        if ($isAssigneeAbsent) {
+            return redirect()->back()->withErrors([
+                'id_user' => 'Staff yang dipilih sedang Absent dan belum bisa menerima task.',
+            ])->withInput();
+        }
 
-        $statusTodo = StatusTask::where('status', 'To Do')->first();
+        $statusTodo = StatusTask::firstByClass('todo');
 
         $standbyDiff = TaskDifficulty::where('difficulty', 'Stand By')->first();
         if ($standbyDiff) {
@@ -41,7 +57,7 @@ class TransferTaskController extends Controller
 
         $creatorId = Auth::user()->id;
 
-        Task::create([
+        $task = Task::create([
             'name' => $request->name,
             'description' => $request->input('description') ?: null,
             'id_user' => $request->id_user,
@@ -52,6 +68,15 @@ class TransferTaskController extends Controller
         ]);
 
         StatusSdmManager::syncForUser(User::findOrFail($request->id_user));
+        TaskAuditLogger::info('task_transfer', [
+            'result' => 'success',
+            'actor_id' => $creatorId,
+            'actor_role' => 'director',
+            'task_id' => $task->id,
+            'project_id' => $task->id_project,
+            'assignee_id' => $task->id_user,
+            'to_status' => 'todo',
+        ]);
 
         return redirect()->route('director.tasks.index')->with('success', 'Task berhasil dibuat');
     }

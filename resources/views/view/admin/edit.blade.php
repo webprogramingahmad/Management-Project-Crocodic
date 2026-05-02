@@ -7,11 +7,55 @@
 @section('css')
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('build/css/main/profile-detail.css') }}">
+    <style>
+        .admin-edit-main-card {
+            border-radius: 15px !important;
+            border-color: rgba(224, 224, 224, 0.7) !important;
+        }
+
+        .admin-edit-submit {
+            border-radius: 0.5rem !important;
+            border-color: rgba(224, 224, 224, 0.7) !important;
+        }
+
+        .admin-edit-content-wrap {
+            border: 1px solid rgba(224, 224, 224, 0.7);
+            border-radius: 15px;
+            padding: 1.25rem;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            #admin-edit-birth-date::-webkit-calendar-picker-indicator,
+            #admin-edit-join-date::-webkit-calendar-picker-indicator {
+                filter: invert(0.85);
+                opacity: 0.9;
+            }
+        }
+
+        html[data-theme="dark"] .admin-edit-main-card {
+            border-color: rgba(161, 161, 170, 0.35) !important;
+        }
+
+        html[data-theme="dark"] .admin-edit-submit {
+            border-color: rgba(161, 161, 170, 0.35) !important;
+        }
+
+        html[data-theme="dark"] .admin-edit-content-wrap {
+            border-color: rgba(161, 161, 170, 0.35);
+        }
+
+        html[data-theme="dark"] #admin-edit-birth-date::-webkit-calendar-picker-indicator,
+        html[data-theme="dark"] #admin-edit-join-date::-webkit-calendar-picker-indicator {
+            filter: invert(0.85);
+            opacity: 0.9;
+        }
+    </style>
 @endsection
 
 @section('content')
-    <div class="container py-5">
-        <div class="profile-card">
+    <div class="container py-2">
+        <div class="profile-card admin-edit-main-card">
+            <div class="admin-edit-content-wrap p-5">
             <div class="d-flex mb-5">
                 <img src="{{ $user->avatar ? asset('storage/avatars/' . $user->avatar) : 'https://ui-avatars.com/api/?name=' . urlencode($user->name) . '&background=0D8ABC&color=fff' }}"
                     class="profile-avatar" alt="User Photo" style="height: 200px; width: 200px; border-radius: 15px; object-fit: cover;">
@@ -31,7 +75,7 @@
                             onsubmit="return confirm('Yakin hapus avatar?')">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-sm btn-light border">Deleted Picture</button>
+                            <button class="btn btn-sm btn-light border">Delete Picture</button>
                         </form>
                     </div>
                 </div>
@@ -77,7 +121,7 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Link Telegram</label>
+                        <label class="text-secondary mb-1">Telegram Link</label>
                         <input type="text" name="link_tele"
                             class="form-control @error('link_tele') is-invalid @enderror"
                             value="{{ $linkTeleValue }}">
@@ -90,9 +134,9 @@
                         $selectedEmploymentId = array_key_exists('id_status_sdm', $oldInput) ? $oldInput['id_status_sdm'] : $defaultEmploymentId;
                     @endphp
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Status SDM</label>
+                        <label class="text-secondary mb-1">Employment Status</label>
                         <select name="id_status_sdm" class="form-select @error('id_status_sdm') is-invalid @enderror">
-                            <option value="" {{ $selectedEmploymentId === '' || $selectedEmploymentId === null ? 'selected' : '' }}>--pilih status--</option>
+                            <option value="" {{ $selectedEmploymentId === '' || $selectedEmploymentId === null ? 'selected' : '' }}>-- Select status --</option>
                             @foreach($statussdms as $status)
                                 <option value="{{ $status->id }}" {{ (string) $selectedEmploymentId === (string) $status->id ? 'selected' : '' }}>{{ $status->status_sdm }}</option>
                             @endforeach
@@ -100,36 +144,38 @@
                         @error('id_status_sdm')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Alamat</label>
+                        <label class="text-secondary mb-1">Address</label>
                         <input type="text" name="alamat" class="form-control @error('alamat') is-invalid @enderror"
                             value="{{ $alamatValue }}">
                         @error('alamat')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">No. HP</label>
+                        <label class="text-secondary mb-1">Phone Number</label>
                         <input type="text" name="no_telp" class="form-control @error('no_telp') is-invalid @enderror"
                             value="{{ $noTelpValue }}">
                         @error('no_telp')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Tanggal Lahir</label>
+                        <label class="text-secondary mb-1">Birth Date</label>
                         <input type="date" name="tgl_lahir"
                             class="form-control @error('tgl_lahir') is-invalid @enderror"
+                            id="admin-edit-birth-date"
                             value="{{ $tglLahirValue }}">
                         @error('tgl_lahir')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Tanggal Masuk</label>
+                        <label class="text-secondary mb-1">Join Date</label>
                         <input type="date" name="tgl_masuk"
                             class="form-control @error('tgl_masuk') is-invalid @enderror"
+                            id="admin-edit-join-date"
                             value="{{ $tglMasukValue }}">
                         @error('tgl_masuk')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Pendidikan Terakhir</label>
+                        <label class="text-secondary mb-1">Last Education</label>
                         <select name="id_graduate" class="form-select @error('id_graduate') is-invalid @enderror">
                             @foreach($lastgraduates as $graduate)
                                 <option value="{{ $graduate->id }}" {{ (string) $graduateValue === (string) $graduate->id ? 'selected' : '' }}>
@@ -141,10 +187,11 @@
                     </div>
 
                     <div class="col-12 text-center mt-4">
-                        <button type="submit" class="btn btn-dark px-5">Simpan</button>
+                        <button type="submit" class="btn btn-dark px-5 admin-edit-submit">Submit</button>
                     </div>
                 </div>
             </form>
+            </div>
         </div>
     </div>
 @endsection

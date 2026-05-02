@@ -26,7 +26,14 @@
                     <select class="form-select" id="userSelect" name="id_user" required>
                         <option value="" disabled selected>Select employee</option>
                         @foreach ($project->sdms as $sdm)
-                            <option value="{{ $sdm->id }}">{{ $sdm->name }}</option>
+                            @php
+                                $isAbsentNow = (bool) ($sdm->is_absent_now ?? false);
+                                $returnLabel = $sdm->absent_returns_on_label ?? null;
+                                $nameLabel = $isAbsentNow
+                                    ? ($sdm->name . ' (Absent' . ($returnLabel ? ' — returns ' . $returnLabel : '') . ')')
+                                    : $sdm->name;
+                            @endphp
+                            <option value="{{ $sdm->id }}" @disabled($isAbsentNow)>{{ $nameLabel }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -62,7 +69,8 @@
             </div>
 
             <div class="modal-footer border-0 pt-1">
-                <button type="submit" class="btn btn-submit">Submit</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-submit">Transfer Task</button>
             </div>
         </form>
     </div>

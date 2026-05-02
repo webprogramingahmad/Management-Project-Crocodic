@@ -21,9 +21,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'checkRole' => CheckRole::class,
             'nocache' => NoCacheHeaders::class,
         ]);
-        $middleware->web(append: [
-            \App\Http\Middleware\EnsureDailySdmOperationalReset::class,
-        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

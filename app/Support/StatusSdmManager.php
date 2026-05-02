@@ -11,14 +11,10 @@ use App\Models\User;
 
 class StatusSdmManager
 {
-    /**
-     * Nilai status task yang berarti masih ada pekerjaan aktif (selaras dengan seeder + variasi casing lama).
-     *
-     * @return list<string>
-     */
-    private static function activeWorkTaskStatuses(): array
+    /** @return list<string> */
+    private static function activeWorkTaskClasses(): array
     {
-        return ['To Do', 'To do', 'In progress', 'Review', 'Revision'];
+        return ['todo', 'progress', 'review', 'revision'];
     }
 
     /**
@@ -96,7 +92,15 @@ class StatusSdmManager
 
         $hasActiveWorkTask = (clone $workTasksQuery)
             ->whereHas('status', function ($q) {
-                $q->whereIn('status', self::activeWorkTaskStatuses());
+                $q->where(function ($w) {
+                    $w->whereIn('class', self::activeWorkTaskClasses());
+                    foreach (self::activeWorkTaskClasses() as $class) {
+                        $labels = \App\Models\StatusTask::legacyLabelsForClass($class);
+                        if ($labels !== []) {
+                            $w->orWhereIn('status', $labels);
+                        }
+                    }
+                });
             })
             ->exists();
 
@@ -115,7 +119,13 @@ class StatusSdmManager
                 ->where('id_difficulty', $standbyDifficultyId)
                 ->whereDate('created_at', $today)
                 ->whereHas('status', function ($q) {
-                    $q->where('status', '!=', 'Complete');
+                    $q->where(function ($w) {
+                        $w->where('class', '!=', 'complete');
+                        $labels = \App\Models\StatusTask::legacyLabelsForClass('complete');
+                        if ($labels !== []) {
+                            $w->orWhereNotIn('status', $labels);
+                        }
+                    });
                 })
                 ->exists();
 
@@ -128,14 +138,39 @@ class StatusSdmManager
         if ($workTasksQuery->exists()) {
             $hasIncompleteWork = (clone $workTasksQuery)
                 ->whereHas('status', function ($q) {
-                    $q->where('status', '!=', 'Complete');
+                    $q->where(function ($w) {
+                        $w->where('class', '!=', 'complete');
+                        $labels = \App\Models\StatusTask::legacyLabelsForClass('complete');
+                        if ($labels !== []) {
+                            $w->orWhereNotIn('status', $labels);
+                        }
+                    });
                 })
                 ->exists();
 
             if (!$hasIncompleteWork) {
-                self::applyActivityStatus($user, 'Stand By');
+                // Setelah reset harian, task complete lama tidak boleh otomatis
+                // mengangkat status ke Stand By. Stand By dari task kerja complete
+                // hanya berlaku jika ada penyelesaian di hari berjalan.
+                $hasWorkCompletedToday = (clone $workTasksQuery)
+                    ->whereDate('updated_at', $today)
+                    ->whereHas('status', function ($q) {
+                        $q->where(function ($w) {
+                            $w->where('class', 'complete');
+                            $labels = \App\Models\StatusTask::legacyLabelsForClass('complete');
+                            if ($labels !== []) {
+                                $w->orWhereIn('status', $labels);
+                            }
+                        });
+                    })
+                    ->exists();
 
-                return;
+                if ($hasWorkCompletedToday) {
+                    self::applyActivityStatus($user, 'Stand By');
+
+                    return;
+                }
+
             }
         }
 

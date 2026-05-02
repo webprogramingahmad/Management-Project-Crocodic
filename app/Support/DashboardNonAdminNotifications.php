@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Administration;
+use App\Models\NotificationRead;
 use App\Models\Project;
 use App\Models\StatusAdministration;
 use App\Models\Task;
@@ -19,30 +20,13 @@ class DashboardNonAdminNotifications
     {
         $user->loadMissing('role');
 
-        $pendingStatusId = StatusAdministration::where('name', 'pending')->value('id');
-        $pendingAdministrations = collect();
-        if ($pendingStatusId) {
-            $pendingAdministrations = Administration::query()
-                ->with(['user.division', 'category', 'status'])
-                ->where('id_user', $user->id)
-                ->where('id_status', $pendingStatusId)
-                ->orderByDesc('created_at')
-                ->limit(25)
-                ->get();
-        }
-
-        $completedNotifyDays = 30;
-        $recentCompletedProjects = Project::query()
-            ->with(['status', 'difficulty', 'director'])
-            ->whereHas('status', function ($q) {
-                $q->where('class', 'completed');
-            })
-            ->where('updated_at', '>=', now()->subDays($completedNotifyDays))
-            ->where(function ($q) use ($user) {
-                $q->where('id_director', $user->id)
-                    ->orWhereHas('sdms', function ($qq) use ($user) {
-                        $qq->where('users.id', $user->id);
-                    });
+        $acceptStatusId = StatusAdministration::where('name', 'accept')->value('id');
+        $rejectStatusId = StatusAdministration::where('name', 'reject')->value('id');
+        $administrationNotifications = Administration::query()
+            ->with(['user.division', 'category', 'status'])
+            ->where('id_user', $user->id)
+            ->when($acceptStatusId || $rejectStatusId, function ($query) use ($acceptStatusId, $rejectStatusId) {
+                $query->whereIn('id_status', array_values(array_filter([$acceptStatusId, $rejectStatusId])));
             })
             ->orderByDesc('updated_at')
             ->limit(25)
@@ -53,8 +37,7 @@ class DashboardNonAdminNotifications
             $reviewTasks = Task::query()
                 ->with(['project', 'status', 'user.division'])
                 ->whereHas('status', function ($q) {
-                    $q->where('class', 'review')
-                        ->orWhere('status', 'Review');
+                    $q->whereClassOrLegacy('review');
                 })
                 ->whereHas('project', function ($q) use ($user) {
                     $q->where('id_director', $user->id);
@@ -66,34 +49,87 @@ class DashboardNonAdminNotifications
                 ->get();
         }
 
-        $revisionTasks = collect();
-        if ($user->role?->role === 'staff') {
-            $revisionTasks = Task::query()
-                ->with(['project', 'status', 'user.division'])
-                ->where('id_user', $user->id)
-                ->excludingStandByDifficulty()
+        $deadlineAlertTasks = Task::query()
+            ->with(['project', 'status', 'difficulty'])
+            ->where('id_user', $user->id)
+            ->whereHas('status', function ($q) {
+                $q->whereIn('class', ['progress', 'revision'])
+                    ->orWhereRaw('LOWER(status) IN (?, ?)', ['in progress', 'revision']);
+            })
+            ->orderByDesc('updated_at')
+            ->limit(50)
+            ->get()
+            ->map(function (Task $task) {
+                $deadline = TaskRunningTimer::deadlineFor($task);
+                if (!$deadline) {
+                    return null;
+                }
+
+                $balanceSeconds = (int) ($deadline->getTimestamp() - now()->timezone(config('app.timezone'))->getTimestamp());
+                if ($balanceSeconds > 1800) {
+                    return null;
+                }
+
+                return (object) [
+                    'task' => $task,
+                    'balance_seconds' => $balanceSeconds,
+                    'sort_at' => $task->updated_at,
+                ];
+            })
+            ->filter()
+            ->values();
+
+        $projectTimelineAlerts = collect();
+        if ($user->role?->role === 'director') {
+            $projectTimelineAlerts = Project::query()
+                ->with(['status', 'director'])
+                ->where('id_director', $user->id)
                 ->whereHas('status', function ($q) {
-                    $q->where('class', 'revision')
-                        ->orWhere('status', 'Revision');
+                    $q->whereIn('class', ['todo', 'running'])
+                        ->orWhereRaw('LOWER(status) IN (?, ?)', ['to do', 'running']);
                 })
                 ->orderByDesc('updated_at')
-                ->limit(25)
-                ->get();
+                ->limit(50)
+                ->get()
+                ->map(function (Project $project) {
+                    $todoBalance = ProjectTimelineTimer::todoStartBalanceSeconds($project);
+                    if ($todoBalance !== null && $todoBalance <= 86400) {
+                        return (object) [
+                            'project' => $project,
+                            'phase' => 'start',
+                            'balance_seconds' => $todoBalance,
+                            'sort_at' => $project->updated_at,
+                        ];
+                    }
+
+                    $runningBalance = ProjectTimelineTimer::runningEndBalanceSeconds($project);
+                    if ($runningBalance !== null && $runningBalance <= 86400) {
+                        return (object) [
+                            'project' => $project,
+                            'phase' => 'end',
+                            'balance_seconds' => $runningBalance,
+                            'sort_at' => $project->updated_at,
+                        ];
+                    }
+
+                    return null;
+                })
+                ->filter()
+                ->values();
         }
 
         $dashboardNotifications = collect();
-        foreach ($pendingAdministrations as $adm) {
+        foreach ($administrationNotifications as $adm) {
             $dashboardNotifications->push((object) [
                 'kind' => 'administration',
-                'sort_at' => $adm->created_at,
+                'sort_at' => $adm->updated_at ?? $adm->created_at,
                 'administration' => $adm,
-            ]);
-        }
-        foreach ($recentCompletedProjects as $project) {
-            $dashboardNotifications->push((object) [
-                'kind' => 'project_completed',
-                'sort_at' => $project->updated_at,
-                'project' => $project,
+                'read_key' => self::buildReadKey(
+                    'administration',
+                    (string) $adm->id,
+                    (string) ($adm->status?->name ?? 'pending'),
+                    $adm->updated_at ?? $adm->created_at
+                ),
             ]);
         }
         foreach ($reviewTasks as $task) {
@@ -101,29 +137,63 @@ class DashboardNonAdminNotifications
                 'kind' => 'task_review',
                 'sort_at' => $task->running_review_at ?? $task->updated_at,
                 'task' => $task,
+                'read_key' => self::buildReadKey(
+                    'task_review',
+                    (string) $task->id,
+                    'review',
+                    $task->running_review_at ?? $task->updated_at
+                ),
             ]);
         }
-        foreach ($revisionTasks as $task) {
+        foreach ($deadlineAlertTasks as $deadlineAlert) {
             $dashboardNotifications->push((object) [
-                'kind' => 'task_revision',
-                'sort_at' => $task->updated_at,
-                'task' => $task,
+                'kind' => 'task_deadline_alert',
+                'sort_at' => $deadlineAlert->sort_at,
+                'task' => $deadlineAlert->task,
+                'balance_seconds' => $deadlineAlert->balance_seconds,
+                // Dynamic by condition; tidak disimpan sebagai read/click-dismiss.
+                'read_key' => null,
             ]);
         }
+        foreach ($projectTimelineAlerts as $projectAlert) {
+            $dashboardNotifications->push((object) [
+                'kind' => 'project_timeline_alert',
+                'sort_at' => $projectAlert->sort_at,
+                'project' => $projectAlert->project,
+                'phase' => $projectAlert->phase,
+                'balance_seconds' => $projectAlert->balance_seconds,
+                // Dynamic by condition; tidak disimpan sebagai read/click-dismiss.
+                'read_key' => null,
+            ]);
+        }
+
+        $readKeys = NotificationRead::query()
+            ->where('id_user', $user->id)
+            ->whereIn('notification_key', $dashboardNotifications->pluck('read_key')->filter()->all())
+            ->pluck('notification_key')
+            ->all();
+
+        $readLookup = array_fill_keys($readKeys, true);
+        $dashboardNotifications = $dashboardNotifications
+            ->reject(fn ($note) => isset($readLookup[$note->read_key ?? '']));
+
         $dashboardNotifications = $dashboardNotifications
             ->sortByDesc(fn ($n) => $n->sort_at?->timestamp ?? 0)
             ->take(35)
             ->values();
 
-        $dashboardNotificationBadgeCount =
-            $pendingAdministrations->count() +
-            $recentCompletedProjects->count() +
-            $reviewTasks->count() +
-            $revisionTasks->count();
+        $dashboardNotificationBadgeCount = $dashboardNotifications->count();
 
         return [
             'dashboardNotifications' => $dashboardNotifications,
             'dashboardNotificationBadgeCount' => $dashboardNotificationBadgeCount,
         ];
+    }
+
+    private static function buildReadKey(string $kind, string $entityId, string $state, $at): string
+    {
+        $timestamp = $at?->timestamp ?? 0;
+
+        return implode(':', [$kind, $entityId, $state, (string) $timestamp]);
     }
 }

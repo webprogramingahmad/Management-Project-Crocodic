@@ -10,7 +10,7 @@
 
 @php
     $role = Auth::user()->role->role;
-    $durationInitial = \App\Support\ProjectDuration::label(old('start_date'), old('end_date'));
+    $durationInitial = \App\Support\LeaveDuration::label(old('start_date'), old('end_date'));
 @endphp
 
 @section('content')
@@ -98,6 +98,6 @@
 @endsection
 
 @section('js')
-    @include('view.projects.partials.project-duration-script')
+    @include('view.administration.partials.leave-duration-script')
     @include('view.projects.partials.project-date-picker-script')
 @endsection

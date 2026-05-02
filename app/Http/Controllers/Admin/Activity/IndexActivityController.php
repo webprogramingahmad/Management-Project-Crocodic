@@ -20,7 +20,7 @@ class IndexActivityController extends Controller
         $year = $request->get('year', now()->year);
 
         $acceptedStatus = StatusAdministration::where('name', 'accept')->first();
-        $completeStatus = StatusTask::where('status', 'Complete')->first();
+        $completeStatus = StatusTask::firstByClass('complete');
 
         $users = User::with(['administrations', 'tasks', 'projects', 'division'])->orderBy('name', 'asc')->get();
 

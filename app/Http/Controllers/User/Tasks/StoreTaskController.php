@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\StatusTask;
 use App\Models\Task;
 use App\Support\StatusSdmManager;
+use App\Support\TaskAuditLogger;
 use App\Support\TaskBoardAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,8 +25,10 @@ class StoreTaskController extends Controller
 
         $isStandby = $request->id_difficulty === 'standby';
 
+        $createdTask = null;
+
         if ($isStandby) {
-            $statusTodo = StatusTask::where('status', 'To Do')->first();
+            $statusTodo = StatusTask::firstByClass('todo');
             $user = Auth::user();
             $standbyDiff = \App\Models\TaskDifficulty::where('difficulty', 'Stand By')->first();
             if (!$standbyDiff) {
@@ -40,7 +43,7 @@ class StoreTaskController extends Controller
             Task::where('id_user', $user->id)
                 ->where('id_difficulty', $standbyDiff->id)
                 ->delete();
-            Task::create([
+            $createdTask = Task::create([
                 'name' => 'Stand By',
                 'description' => $request->input('description') ?: null,
                 'id_difficulty' => $standbyDiff->id,
@@ -58,7 +61,7 @@ class StoreTaskController extends Controller
 
             TaskBoardAccess::assertCanUseProjectForTaskMutation(Auth::user(), (string) $request->id_project);
 
-            $statusTodo = StatusTask::where('status', 'To Do')->first();
+            $statusTodo = StatusTask::firstByClass('todo');
             $userId = Auth::user()->id;
             $standbyDiff = \App\Models\TaskDifficulty::where('difficulty', 'Stand By')->first();
             if ($standbyDiff) {
@@ -66,7 +69,7 @@ class StoreTaskController extends Controller
                     ->where('id_difficulty', $standbyDiff->id)
                     ->delete();
             }
-            Task::create([
+            $createdTask = Task::create([
                 'name' => $request->name,
                 'description' => $request->input('description') ?: null,
                 'id_difficulty' => $request->id_difficulty,
@@ -78,6 +81,17 @@ class StoreTaskController extends Controller
         }
 
         StatusSdmManager::syncForUser(Auth::user());
+        if ($createdTask) {
+            TaskAuditLogger::info('task_create', [
+                'result' => 'success',
+                'actor_id' => Auth::id(),
+                'actor_role' => 'staff',
+                'task_id' => $createdTask->id,
+                'project_id' => $createdTask->id_project,
+                'to_status' => 'todo',
+                'is_standby' => $isStandby,
+            ]);
+        }
 
         return redirect()->route('staff.tasks.index')->with('success', 'Task berhasil dibuat');
     }

@@ -4,9 +4,10 @@ namespace App\Http\Controllers\User\Tasks;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
-use App\Models\StatusTask;
 use App\Models\Task;
 use App\Models\TaskDifficulty;
+use App\Support\TaskBucketQuery;
+use App\Support\TaskStatusCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,74 +20,39 @@ class IndexTaskController extends Controller
     {
         $projects = Project::whereHas('sdms', function ($q) {
             $q->where('users.id', Auth::id());
-        })->orderBy('name', 'asc')->get();
+        })->with('sdms:id,name')->orderBy('name', 'asc')->get();
         $projectsForTaskForms = Project::whereHas('sdms', function ($q) {
             $q->where('users.id', Auth::id());
-        })->whereAllowsTaskCreation()->orderBy('name', 'asc')->get();
-        $tasks = Task::with(['project', 'status', 'difficulty'])
-            ->where('id_user', Auth::id())
-            ->excludingStandByDifficulty()
-            ->orderBy('created_at', 'desc')
-            ->get();
+        })->with('sdms:id,name')->whereAllowsTaskCreation()->orderBy('name', 'asc')->get();
         $projectId = $request->input('project_id');
         $date      = $request->input('date');
 
-        $taskTodo = Task::with(['project', 'difficulty', 'status'])
-            ->where('id_user', Auth::id())
-            ->excludingStandByDifficulty()
-            ->whereHas('status', fn($q) => $q->where('status', 'To Do'))
-            ->when($projectId, fn($q) => $q->where('tasks.id_project', $projectId))
-            ->when($date, fn($q) => $q->whereDate('tasks.created_at', $date))
-            ->get();
-
-        $taskProgress = Task::with(['project', 'difficulty', 'status'])
-            ->where('id_user', Auth::id())
-            ->excludingStandByDifficulty()
-            ->whereHas('status', fn($q) => $q->where('status', 'In progress'))
-            ->when($projectId, fn($q) => $q->where('tasks.id_project', $projectId))
-            ->when($date, fn($q) => $q->whereDate('tasks.created_at', $date))
-            ->get();
-
-        $taskReview = Task::with(['project', 'difficulty', 'status'])
-            ->where('id_user', Auth::id())
-            ->excludingStandByDifficulty()
-            ->whereHas('status', fn($q) => $q->where('status', 'Review'))
-            ->when($projectId, fn($q) => $q->where('tasks.id_project', $projectId))
-            ->when($date, fn($q) => $q->whereDate('tasks.created_at', $date))
-            ->get();
-
-        $taskRevision = Task::with(['project', 'difficulty', 'status'])
-            ->where('id_user', Auth::id())
-            ->excludingStandByDifficulty()
-            ->whereHas('status', fn($q) => $q->where('status', 'Revision'))
-            ->when($projectId, fn($q) => $q->where('tasks.id_project', $projectId))
-            ->when($date, fn($q) => $q->whereDate('tasks.created_at', $date))
-            ->get();
-
-        $taskComplete = Task::with(['project', 'difficulty', 'status'])
-            ->where('id_user', Auth::id())
-            ->excludingStandByDifficulty()
-            ->whereHas('status', fn($q) => $q->where('status', 'Complete'))
-            ->when($projectId, fn($q) => $q->where('tasks.id_project', $projectId))
-            ->when(
-                $date,
-                fn($q) =>
-                $q->whereDate('tasks.updated_at', $date),
-                fn($q) =>
-                $q->whereDate('tasks.updated_at', now()->toDateString())
-            )
-            ->get();
+        $bucketFilters = [
+            'project_id' => $projectId,
+            'date' => $date,
+        ];
+        $taskTodo = TaskBucketQuery::forUserByStatusClass(Auth::id(), TaskStatusCatalog::TODO, $bucketFilters);
+        $taskProgress = TaskBucketQuery::forUserByStatusClass(Auth::id(), TaskStatusCatalog::PROGRESS, $bucketFilters);
+        $taskReview = TaskBucketQuery::forUserByStatusClass(Auth::id(), TaskStatusCatalog::REVIEW, $bucketFilters);
+        $taskRevision = TaskBucketQuery::forUserByStatusClass(Auth::id(), TaskStatusCatalog::REVISION, $bucketFilters);
+        $taskComplete = TaskBucketQuery::forUserByStatusClass(Auth::id(), TaskStatusCatalog::COMPLETE, [
+            'project_id' => $projectId,
+            'date' => $date,
+            'date_column' => 'tasks.updated_at',
+            'default_date' => now()->toDateString(),
+        ]);
 
         $difficulties = TaskDifficulty::oldest()
             ->where('difficulty', '!=', 'Stand By')
             ->get();
 
-        $statusTodo     = StatusTask::where('status', 'To Do')->first();
-        $statusProgress = StatusTask::where('status', 'In progress')->first();
-        $statusReview   = StatusTask::where('status', 'Review')->first();
-        $statusRevision = StatusTask::where('status', 'Revision')->first();
-        $statusComplete = StatusTask::where('status', 'Complete')->first();
+        $statusMap = TaskStatusCatalog::mapByClass();
+        $statusTodo = $statusMap[TaskStatusCatalog::TODO];
+        $statusProgress = $statusMap[TaskStatusCatalog::PROGRESS];
+        $statusReview = $statusMap[TaskStatusCatalog::REVIEW];
+        $statusRevision = $statusMap[TaskStatusCatalog::REVISION];
+        $statusComplete = $statusMap[TaskStatusCatalog::COMPLETE];
 
-        return view('view.tasks.index', compact('tasks', 'projects', 'projectsForTaskForms', 'taskTodo', 'taskProgress', 'taskReview', 'taskRevision', 'taskComplete', 'statusTodo', 'statusProgress', 'statusReview', 'statusRevision', 'statusComplete', 'difficulties', 'projectId', 'date'));
+        return view('view.tasks.index', compact('projects', 'projectsForTaskForms', 'taskTodo', 'taskProgress', 'taskReview', 'taskRevision', 'taskComplete', 'statusTodo', 'statusProgress', 'statusReview', 'statusRevision', 'statusComplete', 'difficulties', 'projectId', 'date'));
     }
 }

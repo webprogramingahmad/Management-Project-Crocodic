@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Division;
 use App\Models\Role;
+use App\Models\Statussdm;
 
 class CreateAdminController extends Controller
 {
@@ -12,6 +13,8 @@ class CreateAdminController extends Controller
     {
         $divisions = Division::orderBy('divisi', 'asc')->get();
         $roles = Role::orderBy('role', 'asc')->get();
-        return view('view.admin.create', compact('divisions', 'roles'));
+        $employmentStatuses = Statussdm::forEmploymentProfileSelect();
+
+        return view('view.admin.create', compact('divisions', 'roles', 'employmentStatuses'));
     }
 }

@@ -85,7 +85,7 @@
                             <label class="form-label text-muted">Status Project</label>
                             <select name="id_status" class="form-select" required>
                                 <option disabled>-- Select Status --</option>
-                                @foreach($statusprojects as $status)
+                                @foreach(($allowedStatusProjects ?? $statusprojects) as $status)
                                     <option value="{{ $status->id }}" {{ old('id_status', $project->id_status) == $status->id ? 'selected' : '' }}>{{ $status->status }}</option>
                                 @endforeach
                             </select>
@@ -103,7 +103,7 @@
                     <div class="card" style="height:100% ;border-radius: 15px; border-color: #E0E0E0CE;">
                     <div class="card-body">
                         <div class="form-container">
-                            <h5 class="fw-bold mb-4">SDM</h5>
+                            <h5 class="fw-bold mb-4">Staff</h5>
                             <div class="mb-3 mx-1">
                                 <label class="form-label text-muted">Project Director</label>
                                 @if ($role === 'director')
@@ -127,7 +127,7 @@
                             </div>
 
                             <div class="mb-3 mx-1">
-                                <label class="form-label">Add SDM</label>
+                                <label class="form-label">Add Staff</label>
                                 <select id="division-select" class="form-select">
                                     <option value="">-- Select division --</option>
                                     @foreach($divisions as $division)
@@ -205,7 +205,7 @@
 
                 const opt0 = document.createElement('option');
                 opt0.value = '';
-                opt0.textContent = '— Select SDM —';
+                opt0.textContent = '— Select staff —';
                 select.appendChild(opt0);
 
                 divisionUsers.forEach(function (u) {
@@ -263,7 +263,7 @@
                     sel.className = 'form-select';
                     sel.disabled = true;
                     const opt = document.createElement('option');
-                    opt.textContent = '-- No SDM available --';
+                    opt.textContent = '-- No staff available --';
                     sel.appendChild(opt);
                     selectsWrap.appendChild(sel);
                 } else {
@@ -298,7 +298,7 @@
                     const addSdmBtn = document.createElement('button');
                     addSdmBtn.type = 'button';
                     addSdmBtn.className = 'btn btn-outline-secondary py-0 px-1 text-nowrap';
-                    addSdmBtn.innerHTML = '<i class="bi bi-plus-lg me-1" style="font-size:0.75rem;line-height:1;vertical-align:-0.05em;"></i><span style="font-size:0.7rem">Add SDM</span>';
+                    addSdmBtn.innerHTML = '<i class="bi bi-plus-lg me-1" style="font-size:0.75rem;line-height:1;vertical-align:-0.05em;"></i><span style="font-size:0.7rem">Add Staff</span>';
                     actions.insertBefore(addSdmBtn, removeBtn);
 
                     function showSecondSlot(preVal) {
@@ -307,7 +307,7 @@
                         const removeSecond = document.createElement('button');
                         removeSecond.type = 'button';
                         removeSecond.className = 'btn btn-link btn-sm text-secondary p-0 align-self-start';
-                        removeSecond.textContent = 'Remove second SDM';
+                        removeSecond.textContent = 'Remove second staff';
                         removeSecond.addEventListener('click', function () {
                             slot2Host.innerHTML = '';
                             slot2Host.style.display = 'none';

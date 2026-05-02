@@ -225,14 +225,38 @@
                 </thead>
                 <tbody>
                     @foreach ($projects as $project)
+                        @php
+                            $timelineStartBalance = \App\Support\ProjectTimelineTimer::todoStartBalanceSeconds($project);
+                            $timelineEndBalance = \App\Support\ProjectTimelineTimer::runningEndBalanceSeconds($project);
+                            $startInValue = $timelineStartBalance !== null
+                                ? \App\Support\ProjectTimelineTimer::formatBalanceDays($timelineStartBalance)
+                                : null;
+                            $startInLate = $timelineStartBalance !== null && $timelineStartBalance < 0;
+                            $endsInValue = $timelineEndBalance !== null
+                                ? \App\Support\ProjectTimelineTimer::formatBalanceDays($timelineEndBalance)
+                                : null;
+                            $endsInLate = $timelineEndBalance !== null && $timelineEndBalance < 0;
+                        @endphp
                         <tr>
                             <td class="text-center fw-semibold" style="width: 6%;">{{ $loop->iteration }}</td>
-                            <td style="width: 20%;" class="fw-semibold">{{ ucwords($project->name) }}</td>
+                            <td style="width: 20%;" class="fw-semibold">
+                                <div>{{ ucwords($project->name) }}</div>
+                            </td>
                             <td class="text-center fw-semibold" style="width: 12%;">
                                 {{ \Carbon\Carbon::parse($project->start_date)->translatedFormat('d F Y') }}
+                                @if ($startInValue)
+                                    <div class="small mt-1 {{ $startInLate ? 'text-danger' : 'text-muted' }}">
+                                        Start in: {{ $startInValue }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="text-center fw-semibold" style="width: 12%;">
                                 {{ \Carbon\Carbon::parse($project->end_date)->translatedFormat('d F Y') }}
+                                @if ($endsInValue)
+                                    <div class="small mt-1 {{ $endsInLate ? 'text-danger' : 'text-muted' }}">
+                                        Ends in: {{ $endsInValue }}
+                                    </div>
+                                @endif
                             </td>
                             <td class="text-center fw-semibold" style="width: 14%;">{{ ucwords($project->director?->name) }}
                             </td>
@@ -270,7 +294,7 @@
                                     <span class="fw-semibold"> - </span>
                                 @endif
                             </td>
-                            <td class="text-center align-middle" style="width: 18%;">
+                            <td class="text-center align-top" style="width: 18%;">
                                 @if ($role === 'director' || $role === 'executive')
                                     <a @if ($role === 'executive') href="{{ route('executive.project.edit', $project->id) }}" @else
                                         href="{{ route('director.project.edit', $project->id) }}"
@@ -282,15 +306,6 @@
                                 @if ($role === 'executive')
                                     <form action="{{ route('executive.project.destroy', $project->id) }}" method="POST" class="d-inline"
                                         onsubmit="return confirm('Yakin ingin hapus project ini?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-sm btn-danger btn-proj-action mb-1 mb-lg-0 me-lg-1 rounded-2">
-                                            <i class="bi bi-trash"></i><span>Delete</span>
-                                        </button>
-                                    </form>
-                                @elseif ($role === 'director')
-                                    <form action="{{ route('director.project.destroy', $project->id) }}" method="POST"
-                                        class="d-inline" onsubmit="return confirm('Yakin ingin hapus project ini?');">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-sm btn-danger btn-proj-action mb-1 mb-lg-0 me-lg-1 rounded-2">

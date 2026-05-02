@@ -7,11 +7,30 @@
 @section('css')
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('build/css/main/profile-detail.css') }}">
+    <style>
+        .profile-edit-main-card {
+            border-radius: 15px !important;
+            border-color: rgba(224, 224, 224, 0.7) !important;
+        }
+
+        .profile-edit-submit {
+            border-radius: 0.5rem !important;
+            border-color: rgba(224, 224, 224, 0.7) !important;
+        }
+
+        html[data-theme="dark"] .profile-edit-main-card {
+            border-color: rgba(161, 161, 170, 0.35) !important;
+        }
+
+        html[data-theme="dark"] .profile-edit-submit {
+            border-color: rgba(161, 161, 170, 0.35) !important;
+        }
+    </style>
 @endsection
 
 @section('content')
     <div class="container-fluid p-1">
-        <div class="card" style="border-radius: 15px; border-color: #E0E0E0CE;">
+        <div class="card profile-edit-main-card">
             <div class= "card-body p-5">
                 <div class="profile-card">
                     <div class="d-flex mb-5" >
@@ -34,7 +53,7 @@
                                     onsubmit="return confirm('Yakin hapus avatar?')">
                                     @csrf
                                     @method('DELETE')
-                                    <button class="btn btn-sm btn-light border" style="height: 30px">Deleted Picture</button>
+                                    <button class="btn btn-sm btn-light border" style="height: 30px">Delete Picture</button>
                                 </form>
                                 @endif
                             </div>
@@ -80,12 +99,12 @@
                     <div class="col-md-6">
                         <label class="text-secondary mb-1">NIK</label>
                         <input type="text" name="nik" class="form-control @error('nik') is-invalid @enderror"
-                            value="{{ $nikValue }}">
+                            value="{{ $nikValue }}" readonly>
                         @error('nik')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Link Telegram</label>
+                        <label class="text-secondary mb-1">Telegram Link</label>
                         <input type="text" name="link_tele"
                             class="form-control @error('link_tele') is-invalid @enderror"
                             value="{{ $linkTeleValue }}">
@@ -98,31 +117,27 @@
                         $selectedEmploymentId = array_key_exists('id_status_sdm', $oldInput) ? $oldInput['id_status_sdm'] : $defaultEmploymentId;
                     @endphp
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Status SDM</label>
-                        <select name="id_status_sdm" class="form-select @error('id_status_sdm') is-invalid @enderror">
-                            <option value="" {{ $selectedEmploymentId === '' || $selectedEmploymentId === null ? 'selected' : '' }}>--pilih status--</option>
-                            @foreach($statussdms as $status)
-                                <option value="{{ $status->id }}" {{ (string) $selectedEmploymentId === (string) $status->id ? 'selected' : '' }}>{{ $status->status_sdm }}</option>
-                            @endforeach
-                        </select>
+                        <label class="text-secondary mb-1">Employment Status</label>
+                        <input type="text" class="form-control @error('id_status_sdm') is-invalid @enderror"
+                            value="{{ $statussdms->firstWhere('id', $selectedEmploymentId)?->status_sdm ?? '-' }}" readonly>
                         @error('id_status_sdm')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Alamat</label>
+                        <label class="text-secondary mb-1">Address</label>
                         <input type="text" name="alamat" class="form-control @error('alamat') is-invalid @enderror"
                             value="{{ $alamatValue }}">
                         @error('alamat')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">No. HP</label>
+                        <label class="text-secondary mb-1">Phone Number</label>
                         <input type="text" name="no_telp" class="form-control @error('no_telp') is-invalid @enderror"
                             value="{{ $noTelpValue }}">
                         @error('no_telp')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
 
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Tanggal Lahir</label>
+                        <label class="text-secondary mb-1">Birth Date</label>
                         <input type="date" name="tgl_lahir"
                             class="form-control @error('tgl_lahir') is-invalid @enderror"
                             value="{{ $tglLahirValue }}">
@@ -130,14 +145,14 @@
                     </div>
 
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Tanggal Masuk</label>
+                        <label class="text-secondary mb-1">Join Date</label>
                         <input type="date" name="tgl_masuk"
                             class="form-control @error('tgl_masuk') is-invalid @enderror"
-                            value="{{ $tglMasukValue }}">
+                            value="{{ $tglMasukValue }}" readonly>
                         @error('tgl_masuk')<div class="invalid-feedback d-block">{{ $message }}</div>@enderror
                     </div>
                     <div class="col-md-6">
-                        <label class="text-secondary mb-1">Pendidikan Terakhir</label>
+                        <label class="text-secondary mb-1">Last Education</label>
                         <select name="id_graduate" class="form-select @error('id_graduate') is-invalid @enderror">
                             @foreach($lastgraduates as $graduate)
                                 <option value="{{ $graduate->id }}" {{ (string) $graduateValue === (string) $graduate->id ? 'selected' : '' }}>

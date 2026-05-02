@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Director\Tasks;
 
 use App\Http\Controllers\Controller;
+use App\Models\Administration;
 use App\Models\Project;
 use App\Models\StatusTask;
 use App\Models\TaskDifficulty;
@@ -36,7 +37,22 @@ class TransferProjectTaskController extends Controller
             'description' => 'nullable|string|max:5000',
         ]);
 
-        $statusTodo = StatusTask::where('status', 'To Do')->first();
+        $today = now()->toDateString();
+        $isAssigneeAbsent = Administration::query()
+            ->where('id_user', $request->id_user)
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->whereHas('status', function ($q) {
+                $q->where('name', 'accept');
+            })
+            ->exists();
+        if ($isAssigneeAbsent) {
+            return redirect()->back()->withErrors([
+                'id_user' => 'Staff yang dipilih sedang Absent dan belum bisa menerima task.',
+            ])->withInput();
+        }
+
+        $statusTodo = StatusTask::firstByClass('todo');
 
         $standbyDiff = TaskDifficulty::where('difficulty', 'Stand By')->first();
         if ($standbyDiff) {

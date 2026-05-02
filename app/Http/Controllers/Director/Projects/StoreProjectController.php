@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Director\Projects;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\StatusProject;
 use App\Support\ProjectSdmAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,19 +23,21 @@ class StoreProjectController extends Controller
             'start_date'      => ['required', 'date'],
             'end_date'        => ['required', 'date', 'after_or_equal:start_date'],
             'id_difficulty'   => ['nullable', 'uuid', 'exists:project_difficulties,id'],
-            'id_status'       => ['required', 'uuid', 'exists:status_projects,id'],
             'description'     => ['nullable', 'string'],
         ]);
 
+        $todoStatus = StatusProject::firstByClass('todo');
+        abort_unless($todoStatus, 422, 'Status project "To do" tidak ditemukan.');
+
         $sdmIds = ProjectSdmAssignment::validatedIds($request);
 
-        DB::transaction(function () use ($validated, $director, $sdmIds) {
+        DB::transaction(function () use ($validated, $director, $sdmIds, $todoStatus) {
             $project = Project::create([
                 'name'            => $validated['name'],
                 'start_date'      => $validated['start_date'],
                 'end_date'        => $validated['end_date'],
                 'id_difficulty'   => $validated['id_difficulty'] ?? null,
-                'id_status'       => $validated['id_status'],
+                'id_status'       => $todoStatus->id,
                 'description'     => $validated['description'] ?? null,
                 'id_director'     => $director,
             ]);

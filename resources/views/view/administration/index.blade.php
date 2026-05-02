@@ -61,6 +61,11 @@
             flex-shrink: 0;
         }
 
+        .permission-list-outer-card {
+            border-radius: 15px !important;
+            border-color: rgba(224, 224, 224, 0.7) !important;
+        }
+
         .permission-list-scroll {
             flex: 1 1 auto;
             min-height: 0;
@@ -88,18 +93,21 @@
             color: var(--dash-text, #f4f4f5);
             border-color: var(--dash-border, #3f3f46);
         }
+
+        html[data-theme="dark"] .permission-list-outer-card {
+            border-color: rgba(161, 161, 170, 0.35) !important;
+        }
     </style>
 @endsection
 
 @php
-    use App\Support\ProjectDuration;
+    use App\Support\LeaveDuration;
     $role = Auth::user()->role->role;
 @endphp
 
 @section('content')
     <div class="permission-list-page">
-    <div class="card permission-list-card gx-0 py-2 px-2 border"
-        style="border-radius:15px; border-color:#E0E0E0CE !important;">
+    <div class="card permission-list-card permission-list-outer-card gx-0 py-2 px-2 border">
         <div class="permission-list-toolbar d-flex mt-4 mx-5 justify-content-between align-items-center mb-3 flex-wrap gap-3">
             <div class="fw-bold fs-2">
                 Permission List
@@ -140,7 +148,7 @@
                             <td class="text-center fw-semibold" style="width: 12%;">{{ ucwords($absent->category->name) }}
                             </td>
                             <td class="text-center fw-semibold text-break" style="width: 11%;">
-                                {{ ProjectDuration::label($absent->start_date?->format('Y-m-d'), $absent->end_date?->format('Y-m-d')) }}
+                                {{ LeaveDuration::label($absent->start_date?->format('Y-m-d'), $absent->end_date?->format('Y-m-d')) }}
                             </td>
                             <td class="text-center fw-semibold" style="width: 10%;">
                                 {{ \Carbon\Carbon::parse($absent->start_date)->translatedFormat('d F Y') }}

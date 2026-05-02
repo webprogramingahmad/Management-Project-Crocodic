@@ -7,6 +7,61 @@ use Carbon\Carbon;
 
 class TaskRunningTimer
 {
+    /**
+     * Sisa/lebih waktu siklus In progress (detik).
+     * Positif = masih sisa waktu, negatif = minus.
+     */
+    public static function progressBalanceSeconds(Task $task): ?int
+    {
+        $task->loadMissing(['status', 'difficulty']);
+
+        // Sesuai UI rule: hasil In Progress baru ditampilkan setelah task masuk Review.
+        if (!$task->running_review_at) {
+            return null;
+        }
+
+        if (!$task->running_started_at && !$task->created_at) {
+            return null;
+        }
+
+        $deadline = self::deadlineFromProgressStart($task);
+        if (!$deadline) {
+            return null;
+        }
+
+        $endAt = $task->running_review_at->copy()->timezone(config('app.timezone'));
+
+        return (int) ($deadline->getTimestamp() - $endAt->getTimestamp());
+    }
+
+    /**
+     * @return array<int, array{cycle_number:int,balance_seconds:?int,is_active:bool}>
+     */
+    public static function revisionCycleBalances(Task $task): array
+    {
+        $task->loadMissing('revisionCycles');
+
+        return $task->revisionCycles
+            // Sesuai UI rule: hasil Revision baru ditampilkan setelah kembali ke Review.
+            ->filter(fn ($cycle) => $cycle->exited_revision_at !== null)
+            ->sortBy('cycle_number')
+            ->map(function ($cycle): array {
+                $balance = null;
+                if ($cycle->deadline_at) {
+                    $endAt = $cycle->exited_revision_at->copy()->timezone(config('app.timezone'));
+                    $balance = (int) ($cycle->deadline_at->copy()->timezone(config('app.timezone'))->getTimestamp() - $endAt->getTimestamp());
+                }
+
+                return [
+                    'cycle_number' => (int) $cycle->cycle_number,
+                    'balance_seconds' => $balance,
+                    'is_active' => $cycle->exited_revision_at === null,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
     /** Status task = sedang jalan (kolom In progress). */
     public static function isInProgressStatus(?\App\Models\StatusTask $status): bool
     {
@@ -84,7 +139,7 @@ class TaskRunningTimer
 
     private static function deadlineFromProgressStart(Task $task): ?Carbon
     {
-        if (!$task->running_started_at) {
+        if (!$task->running_started_at && !$task->created_at) {
             return null;
         }
 
@@ -93,7 +148,8 @@ class TaskRunningTimer
             return null;
         }
 
-        $start = $task->running_started_at->copy()->timezone(config('app.timezone'));
+        $startSource = $task->running_started_at ?? $task->created_at;
+        $start = $startSource->copy()->timezone(config('app.timezone'));
 
         return match (strtolower((string) $level)) {
             'low' => $start->copy()->addHours(2),
@@ -138,9 +194,29 @@ class TaskRunningTimer
      */
     public static function frozenRemainMsForReview(Task $task): ?int
     {
-        $task->loadMissing(['status', 'difficulty']);
+        $task->loadMissing(['status', 'difficulty', 'revisionCycles']);
 
         if (!self::isReviewStatus($task->status) || !$task->running_review_at) {
+            // Untuk siklus revision selesai, hasil freeze diambil dari cycle terakhir
+            // meski running_review_at tidak diperbarui.
+            if (!self::isReviewStatus($task->status)) {
+                return null;
+            }
+        }
+
+        $latestClosedRevision = $task->revisionCycles
+            ->whereNotNull('exited_revision_at')
+            ->sortByDesc('cycle_number')
+            ->first();
+
+        if ($latestClosedRevision && $latestClosedRevision->deadline_at && $latestClosedRevision->exited_revision_at) {
+            return (int) round((
+                $latestClosedRevision->deadline_at->copy()->timezone(config('app.timezone'))->getTimestamp()
+                - $latestClosedRevision->exited_revision_at->copy()->timezone(config('app.timezone'))->getTimestamp()
+            ) * 1000);
+        }
+
+        if (!$task->running_review_at) {
             return null;
         }
 

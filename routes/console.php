@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('sdm:reset-not-ready')->dailyAt('00:00');
+Schedule::command('sdm:health-check --warn-threshold=90')->dailyAt('00:10');

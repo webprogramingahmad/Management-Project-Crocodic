@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Director\Projects;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Models\StatusProject;
 use App\Support\ProjectSdmAssignment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -31,6 +32,11 @@ class UpdateProjectController extends Controller
 
         $sdmIds = ProjectSdmAssignment::validatedIds($request);
 
+        $project->loadMissing('status');
+        $incomingStatus = StatusProject::findOrFail($validated['id_status']);
+
+        $this->validateStatusTransition($project->status, $incomingStatus);
+
         $validated['id_director'] = Auth::id();
 
         $project->update($validated);
@@ -38,5 +44,30 @@ class UpdateProjectController extends Controller
         $project->sdms()->sync($sdmIds);
 
         return redirect()->route('director.projects.index')->with('success', 'Project berhasil diupdate');
+    }
+
+    private function validateStatusTransition(?StatusProject $current, StatusProject $incoming): void
+    {
+        $order = [
+            'todo' => 1,
+            'running' => 2,
+            'maintenance' => 3,
+            'completed' => 4,
+        ];
+
+        $currentClass = strtolower((string) ($current?->class ?? ''));
+        $incomingClass = strtolower((string) ($incoming->class ?? ''));
+
+        if (!isset($order[$currentClass]) || !isset($order[$incomingClass])) {
+            return;
+        }
+
+        if ($incomingClass === $currentClass) {
+            return;
+        }
+
+        if ($order[$incomingClass] !== ($order[$currentClass] + 1)) {
+            abort(422, 'Status project harus berurutan: To do -> Running -> Maintenance -> Complete.');
+        }
     }
 }

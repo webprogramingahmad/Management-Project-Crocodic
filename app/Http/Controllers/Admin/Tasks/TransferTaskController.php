@@ -9,6 +9,7 @@ use App\Models\TaskDifficulty;
 use App\Models\Task;
 use App\Models\User;
 use App\Support\StatusSdmManager;
+use App\Support\TaskAuditLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -27,7 +28,7 @@ class TransferTaskController extends Controller
             'description' => 'nullable|string|max:5000',
         ]);
 
-        $statusTodo = StatusTask::where('status', 'To Do')->first();
+        $statusTodo = StatusTask::firstByClass('todo');
 
         $standbyDiff = TaskDifficulty::where('difficulty', 'Stand By')->first();
         if ($standbyDiff) {
@@ -38,7 +39,7 @@ class TransferTaskController extends Controller
 
         $creatorId = Auth::user()->id;
 
-        Task::create([
+        $task = Task::create([
             'name' => $request->name,
             'description' => $request->input('description') ?: null,
             'id_user' => $request->id_user,
@@ -49,6 +50,15 @@ class TransferTaskController extends Controller
         ]);
 
         StatusSdmManager::syncForUser(User::findOrFail($request->id_user));
+        TaskAuditLogger::info('task_transfer', [
+            'result' => 'success',
+            'actor_id' => $creatorId,
+            'actor_role' => 'executive',
+            'task_id' => $task->id,
+            'project_id' => $task->id_project,
+            'assignee_id' => $task->id_user,
+            'to_status' => 'todo',
+        ]);
 
         return redirect()->route('executive.tasks.index')->with('success', 'Task berhasil dibuat');
     }
