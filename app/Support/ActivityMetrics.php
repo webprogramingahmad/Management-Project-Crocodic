@@ -15,6 +15,7 @@ class ActivityMetrics
         'tasks.difficulty',
         'tasks.project',
         'projects.status',
+        'directedProjects.status',
         'division',
         'role',
     ];
@@ -49,6 +50,8 @@ class ActivityMetrics
             ->count();
 
         $periodProjects = $user->projects
+            ->concat($user->directedProjects)
+            ->unique('id')
             ->filter(function ($project) use ($month, $year) {
                 return Carbon::parse($project->start_date)->year <= $year &&
                     Carbon::parse($project->end_date)->year >= $year &&

@@ -27,7 +27,12 @@ class IndexProfileController extends Controller
             ->where('id_status', $completeStatus?->id)
             ->count();
 
-        $projects_joined_count = $user->projects()->count();
+        // Hitung project sebagai anggota SDM + project yang dipimpin sebagai director (unik per ID),
+        // selaras dengan metrik di halaman Activity agar tidak ada perbedaan data.
+        $projects_joined_count = $user->projects()->pluck('projects.id')
+            ->merge($user->directedProjects()->pluck('id'))
+            ->unique()
+            ->count();
 
         return view('view.profile.index', compact('user', 'accepted_absent_count', 'completed_task_count', 'projects_joined_count'));
     }

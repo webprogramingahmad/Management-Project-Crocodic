@@ -165,6 +165,20 @@
             color: var(--dash-text, #f4f4f5);
             border-color: var(--dash-border, #3f3f46);
         }
+
+        .project-report-name-link {
+            cursor: pointer;
+            transition: color 0.15s ease;
+        }
+
+        .project-report-name-link:hover {
+            color: #6FAEC9 !important;
+            text-decoration: underline !important;
+        }
+
+        html[data-theme="dark"] .project-report-name-link:hover {
+            color: #8ec5dc !important;
+        }
     </style>
 @endsection
 
@@ -259,7 +273,17 @@
                         <tr>
                             <td class="text-center fw-semibold" style="width: 6%;">{{ $loop->iteration }}</td>
                             <td style="width: 20%;" class="fw-semibold">
-                                <div>{{ ucwords($project->name) }}</div>
+                                @if ($role === 'executive')
+                                    <a href="{{ route('executive.project.report', $project->id) }}"
+                                        class="text-reset text-decoration-none project-report-name-link"
+                                        title="Open Project Report">{{ ucwords($project->name) }}</a>
+                                @elseif ($role === 'director')
+                                    <a href="{{ route('director.project.report', $project->id) }}"
+                                        class="text-reset text-decoration-none project-report-name-link"
+                                        title="Open Project Report">{{ ucwords($project->name) }}</a>
+                                @else
+                                    <div>{{ ucwords($project->name) }}</div>
+                                @endif
                             </td>
                             <td class="text-center fw-semibold" style="width: 12%;">
                                 {{ \Carbon\Carbon::parse($project->start_date)->translatedFormat('d F Y') }}
