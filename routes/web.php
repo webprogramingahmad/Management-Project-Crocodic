@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\Activity\IndexActivityController;
+use App\Http\Controllers\Admin\Activity\ShowActivityController;
 use App\Http\Controllers\Admin\Admin\CreateAdminController;
 use App\Http\Controllers\Admin\Admin\DestroyAdminController;
 use App\Http\Controllers\Admin\Admin\DestroypictAdminController;
@@ -36,6 +37,7 @@ use App\Http\Controllers\Admin\Tasks\TransferProjectTaskController;
 use App\Http\Controllers\Admin\Tasks\TransferTaskController;
 use App\Http\Controllers\Admin\Tasks\UpdateProjectTaskController;
 use App\Http\Controllers\UpdateStatusTaskController;
+use App\Http\Controllers\Tasks\DestroyTaskPhotoController;
 use App\Http\Controllers\Admin\Tasks\UpdateTaskController;
 use App\Http\Controllers\Director\Administration\CreateAdministrationController as DirectorCreateAdministrationController;
 use App\Http\Controllers\Director\Administration\IndexAdministrationController as DirectorIndexAdministrationController;
@@ -154,6 +156,7 @@ Route::middleware(['auth', 'checkRole:executive', 'nocache'])->group(function ()
         });
 
         Route::get('/activity', IndexActivityController::class)->name('executive.activity.index');
+        Route::get('/activity/{id}', ShowActivityController::class)->name('executive.activity.show');
 
         Route::prefix('/administration')->group(function () {
             Route::get('/', IndexAdministrationController::class)->name('executive.administration.index');
@@ -201,7 +204,10 @@ Route::middleware(['auth', 'checkRole:staff', 'nocache'])->group(function () {
             Route::post('/task-store', UserStoreTaskController::class)->name('staff.task.store');
             Route::post('/task-update-status/{id}', UpdateStatusTaskController::class)->name('staff.task.updateStatus');
             Route::post('/task-update', UserUpdateTaskController::class)->name('staff.task.update');
+            Route::delete('/task-photo/{photo}', DestroyTaskPhotoController::class)->name('staff.task.photo.destroy');
         });
+
+        Route::get('/activity', IndexActivityController::class)->name('staff.activity.index');
 
         Route::prefix('/administration')->group(function () {
             Route::get('/', UserIndexAdministrationController::class)->name('staff.administration.index');
@@ -242,7 +248,11 @@ Route::middleware(['auth', 'checkRole:director', 'nocache'])->group(function () 
             Route::post('/task-review-decision/{id}', DirectorReviewTaskDecisionController::class)->name('director.task.reviewDecision');
             Route::post('/task-update-status/{id}', UpdateStatusTaskController::class)->name('director.task.updateStatus');
             Route::post('/task/task-transfer', DirectorTransferTaskController::class)->name('director.task.transfer');
+            Route::delete('/task-photo/{photo}', DestroyTaskPhotoController::class)->name('director.task.photo.destroy');
         });
+
+        Route::get('/activity', IndexActivityController::class)->name('director.activity.index');
+        Route::get('/activity/{id}', ShowActivityController::class)->name('director.activity.show');
 
         Route::prefix('/administration')->group(function () {
             Route::get('/', DirectorIndexAdministrationController::class)->name('director.administration.index');

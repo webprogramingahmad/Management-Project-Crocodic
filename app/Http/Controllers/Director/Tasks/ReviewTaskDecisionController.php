@@ -72,6 +72,7 @@ class ReviewTaskDecisionController extends Controller
         $validated = $request->validate([
             'decision' => 'required|in:complete,revision',
             'revision_hours' => 'required_if:decision,revision|nullable|in:2,3,4',
+            'revision_notes' => 'required_if:decision,revision|nullable|string|max:2000',
         ]);
 
         $completeStatus = StatusTask::query()->where('class', 'complete')->first()
@@ -102,6 +103,7 @@ class ReviewTaskDecisionController extends Controller
                 'entered_revision_at' => $enteredAt,
                 'deadline_at' => $deadlineAt,
                 'revision_hours' => $hours,
+                'notes' => trim((string) $validated['revision_notes']),
             ]);
         }
 

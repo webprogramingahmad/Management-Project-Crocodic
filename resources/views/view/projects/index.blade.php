@@ -117,6 +117,25 @@
 
         .project-list-toolbar {
             flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+            overflow: visible;
+        }
+
+        .project-list-toolbar .dropdown-menu {
+            z-index: 1080;
+        }
+
+        html[data-theme="light"] .project-list-toolbar .dropdown-menu .dropdown-item:hover,
+        html[data-theme="light"] .project-list-toolbar .dropdown-menu .dropdown-item:focus {
+            background-color: #e9ecef;
+            color: #212529;
+        }
+
+        html[data-theme="light"] .project-list-toolbar .dropdown-menu .dropdown-item.active {
+            background-color: #dee2e6;
+            color: #212529;
+            font-weight: 600;
         }
 
         .project-index-table-scroll {
@@ -179,10 +198,10 @@
                         Filter by Level
                     </button>
                     <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('level') ? ('?' . http_build_query(request()->except('level'))) : '') }}">All Levels</a></li>
-                        <li><a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('level') ? ('?' . http_build_query(array_merge(request()->except('level'), ['level' => 'Low']))) : ('?level=Low')) }}">Low</a></li>
-                        <li><a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('level') ? ('?' . http_build_query(array_merge(request()->except('level'), ['level' => 'Medium']))) : ('?level=Medium')) }}">Medium</a></li>
-                        <li><a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('level') ? ('?' . http_build_query(array_merge(request()->except('level'), ['level' => 'High']))) : ('?level=High')) }}">High</a></li>
+                        <li><a class="dropdown-item {{ !request('level') ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('level') ? ('?' . http_build_query(request()->except('level'))) : '') }}">All Levels</a></li>
+                        <li><a class="dropdown-item {{ strcasecmp((string) request('level'), 'Low') === 0 ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('level') ? ('?' . http_build_query(array_merge(request()->except('level'), ['level' => 'Low']))) : ('?level=Low')) }}">Low</a></li>
+                        <li><a class="dropdown-item {{ strcasecmp((string) request('level'), 'Medium') === 0 ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('level') ? ('?' . http_build_query(array_merge(request()->except('level'), ['level' => 'Medium']))) : ('?level=Medium')) }}">Medium</a></li>
+                        <li><a class="dropdown-item {{ strcasecmp((string) request('level'), 'High') === 0 ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('level') ? ('?' . http_build_query(array_merge(request()->except('level'), ['level' => 'High']))) : ('?level=High')) }}">High</a></li>
                     </ul>
                 </div>
 
@@ -194,12 +213,12 @@
                     </button>
                     <ul class="dropdown-menu">
                         <li>
-                            <a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(request()->except('status'))) : '') }}">All Statuses</a>
+                            <a class="dropdown-item {{ !request('status') ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(request()->except('status'))) : '') }}">All Statuses</a>
                         </li>
-                        <li><a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(array_merge(request()->except('status'), ['status' => 'To Do']))) : ('?status=To+Do')) }}">To Do</a></li>
-                        <li><a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(array_merge(request()->except('status'), ['status' => 'Running']))) : ('?status=Running')) }}">Running</a></li>
-                        <li><a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(array_merge(request()->except('status'), ['status' => 'Maintenance']))) : ('?status=Maintenance')) }}">Maintenance</a></li>
-                        <li><a class="dropdown-item" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(array_merge(request()->except('status'), ['status' => 'Completed']))) : ('?status=Completed')) }}">Completed</a></li>
+                        <li><a class="dropdown-item {{ strcasecmp((string) request('status'), 'To Do') === 0 ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(array_merge(request()->except('status'), ['status' => 'To Do']))) : ('?status=To+Do')) }}">To Do</a></li>
+                        <li><a class="dropdown-item {{ strcasecmp((string) request('status'), 'Running') === 0 ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(array_merge(request()->except('status'), ['status' => 'Running']))) : ('?status=Running')) }}">Running</a></li>
+                        <li><a class="dropdown-item {{ strcasecmp((string) request('status'), 'Maintenance') === 0 ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(array_merge(request()->except('status'), ['status' => 'Maintenance']))) : ('?status=Maintenance')) }}">Maintenance</a></li>
+                        <li><a class="dropdown-item {{ strcasecmp((string) request('status'), 'Completed') === 0 ? 'active' : '' }}" href="{{ route($routeIndex) . (request()->except('status') ? ('?' . http_build_query(array_merge(request()->except('status'), ['status' => 'Completed']))) : ('?status=Completed')) }}">Completed</a></li>
                     </ul>
                 </div>
             </div>

@@ -19,6 +19,7 @@ class TaskBucketQuery
             'difficulty:id,difficulty,class',
             'status:id,status,class',
             'user:id,name,avatar',
+            'photos',
         ];
     }
 
@@ -29,6 +30,8 @@ class TaskBucketQuery
     {
         $projectId = $filters['project_id'] ?? null;
         $date = $filters['date'] ?? null;
+        $dateFrom = $filters['date_from'] ?? null;
+        $dateTo = $filters['date_to'] ?? null;
         $dateColumn = $filters['date_column'] ?? 'tasks.created_at';
         $defaultDate = $filters['default_date'] ?? null;
 
@@ -54,14 +57,10 @@ class TaskBucketQuery
             ->excludingStandByDifficulty()
             ->whereHas('status', fn ($q) => $q->whereClassOrLegacy($statusClass))
             ->when($projectId, fn ($q) => $q->where('tasks.id_project', $projectId))
-            ->when(
-                $date !== null || $defaultDate !== null,
-                fn ($q) => $q->when(
-                    $date,
-                    fn ($qq) => $qq->whereDate($dateColumn, $date),
-                    fn ($qq) => $defaultDate ? $qq->whereDate($dateColumn, $defaultDate) : $qq
-                )
-            )
+            ->when($date, fn ($q) => $q->whereDate($dateColumn, $date))
+            ->when(!$date && $dateFrom, fn ($q) => $q->whereDate($dateColumn, '>=', $dateFrom))
+            ->when(!$date && $dateTo, fn ($q) => $q->whereDate($dateColumn, '<=', $dateTo))
+            ->when(!$date && !$dateFrom && !$dateTo && $defaultDate, fn ($q) => $q->whereDate($dateColumn, $defaultDate))
             ->get();
     }
 
@@ -73,6 +72,8 @@ class TaskBucketQuery
     {
         $projectId = $filters['project_id'] ?? null;
         $date = $filters['date'] ?? null;
+        $dateFrom = $filters['date_from'] ?? null;
+        $dateTo = $filters['date_to'] ?? null;
         $dateColumn = $filters['date_column'] ?? 'tasks.created_at';
         $defaultDate = $filters['default_date'] ?? null;
 
@@ -96,14 +97,10 @@ class TaskBucketQuery
             ->with(self::boardRelations())
             ->whereHas('status', fn ($q) => $q->whereClassOrLegacy($statusClass))
             ->when($projectId, fn ($q) => $q->where('tasks.id_project', $projectId))
-            ->when(
-                $date !== null || $defaultDate !== null,
-                fn ($q) => $q->when(
-                    $date,
-                    fn ($qq) => $qq->whereDate($dateColumn, $date),
-                    fn ($qq) => $defaultDate ? $qq->whereDate($dateColumn, $defaultDate) : $qq
-                )
-            )
+            ->when($date, fn ($q) => $q->whereDate($dateColumn, $date))
+            ->when(!$date && $dateFrom, fn ($q) => $q->whereDate($dateColumn, '>=', $dateFrom))
+            ->when(!$date && $dateTo, fn ($q) => $q->whereDate($dateColumn, '<=', $dateTo))
+            ->when(!$date && !$dateFrom && !$dateTo && $defaultDate, fn ($q) => $q->whereDate($dateColumn, $defaultDate))
             ->get();
     }
 }

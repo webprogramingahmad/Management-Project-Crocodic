@@ -27,6 +27,25 @@
 
         .tasks-board-toolbar {
             flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+            overflow: visible;
+        }
+
+        .tasks-board-toolbar .dropdown-menu {
+            z-index: 1080;
+        }
+
+        html[data-theme="light"] .tasks-board-toolbar .dropdown-menu .dropdown-item:hover,
+        html[data-theme="light"] .tasks-board-toolbar .dropdown-menu .dropdown-item:focus {
+            background-color: #e9ecef;
+            color: #212529;
+        }
+
+        html[data-theme="light"] .tasks-board-toolbar .dropdown-menu .dropdown-item.active {
+            background-color: #dee2e6;
+            color: #212529;
+            font-weight: 600;
         }
 
         .tasks-board-columns-wrap {
@@ -138,6 +157,19 @@
         'director' => route('director.task.updateStatus', ['id' => '__TASK_ID__']),
         default => route('staff.task.updateStatus', ['id' => '__TASK_ID__']),
     };
+    $dateFilter = $dateFilter ?? [
+        'preset' => 'today',
+        'label' => 'Today',
+        'date' => now()->toDateString(),
+        'date_from' => now()->toDateString(),
+        'date_to' => now()->toDateString(),
+    ];
+    $baseTimeQuery = request()->except(['date', 'date_filter', 'date_from', 'date_to']);
+    $timeFilterUrl = function (array $params) use ($routeProjectIndex, $project, $baseTimeQuery) {
+        $query = array_merge($baseTimeQuery, $params);
+
+        return route($routeProjectIndex, $project->id) . ($query ? '?' . http_build_query($query) : '');
+    };
 @endphp
 
 @section('content')
@@ -146,12 +178,36 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
                 <div class="d-flex gap-2">
                     <form method="GET" action="{{ route($routeProjectIndex, $project->id) }}" class="d-flex gap-2">
-                        <div style="display:inline-block; position:relative; width:150px; height:35px;">
-                            <input type="date" name="date" id="datepickerInput" value="{{ request('date') }}" style="position:absolute; inset:0; width:100%; height:100%; opacity:0; border:0; padding:0; margin:0; cursor:pointer;">
-                            <button type="button" id="datepickerButton" class="d-flex justify-content-between btn btn-outline-secondary rounded-3 align-items-center gap-2 px-2 py-0" style="width: 150px; height:35px; line-height:35px; border-color: #6c757d;">
-                                <span id="datepickerLabel">{{ request('date') ? \Carbon\Carbon::parse(request('date'))->format('d/m/Y') : 'Date' }}</span>
+                        <div class="dropdown tasks-filter">
+                            <button type="button" id="datepickerButton" class="d-inline-flex btn btn-outline-secondary rounded-3 align-items-center gap-2 px-3 py-0" style="height:35px; line-height:35px; border-color: #6c757d;" data-bs-toggle="dropdown" aria-expanded="false">
+                                <span id="datepickerLabel">{{ $dateFilter['label'] }}</span>
                                 <i class="bi bi-calendar3"></i>
                             </button>
+                            <ul class="dropdown-menu p-2" style="min-width: 220px;">
+                                <li>
+                                    <a class="dropdown-item rounded-2 {{ $dateFilter['preset'] === 'today' ? 'active' : '' }}" href="{{ $timeFilterUrl(['date_filter' => 'today']) }}">Today</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item rounded-2 {{ $dateFilter['preset'] === 'last_7_days' ? 'active' : '' }}" href="{{ $timeFilterUrl(['date_filter' => 'last_7_days']) }}">Last 7 days</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item rounded-2 {{ $dateFilter['preset'] === 'last_30_days' ? 'active' : '' }}" href="{{ $timeFilterUrl(['date_filter' => 'last_30_days']) }}">Last 30 days</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item rounded-2 {{ $dateFilter['preset'] === 'all_time' ? 'active' : '' }}" href="{{ $timeFilterUrl(['date_filter' => 'all_time']) }}">All time</a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li class="px-2 py-1">
+                                    @foreach ($baseTimeQuery as $key => $value)
+                                        <input type="hidden" name="{{ $key }}" value="{{ $value }}">
+                                    @endforeach
+                                    <label for="datepickerInput" class="form-label small text-secondary mb-1">Custom date</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="date" name="date" id="datepickerInput" class="form-control form-control-sm" value="{{ $dateFilter['date'] }}">
+                                        <button class="btn btn-sm btn-outline-secondary" type="submit">Apply</button>
+                                    </div>
+                                </li>
+                            </ul>
                         </div>
                     </form>
                 </div>
@@ -171,29 +227,6 @@
             </div>
         </div>
 
-    <script>
-        (function () {
-            var dateInput = document.getElementById('datepickerInput');
-            var dateLabel = document.getElementById('datepickerLabel');
-            if (!dateInput) return;
-
-            dateInput.addEventListener('change', function () {
-                if (this.value) {
-                    var d = new Date(this.value);
-                    var dd = String(d.getDate()).padStart(2, '0');
-                    var mm = String(d.getMonth() + 1).padStart(2, '0');
-                    var yyyy = d.getFullYear();
-                    var formatted = dd + '/' + mm + '/' + yyyy;
-                    dateLabel.textContent = formatted;
-                } else {
-                    dateLabel.textContent = 'Date';
-                }
-                var f = this.closest('form');
-                if (f) f.submit();
-            });
-        })();
-    </script>
-
         <div class="tasks-board-columns-wrap">
             <div class="tasks-board-columns-inner container-fluid py-1 px-1 gx-0">
             <div class="row tasks-board-row tasks-board-row--kanban gx-0 pb-1 flex-nowrap mx-0">
@@ -202,7 +235,12 @@
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header bg-danger rounded-top" style="height: 10px;"></div>
                         <div class="tasks-board-card-body p-3">
-                            <h5 class="card-label mb-2">To do</h5>
+                            <div class="card-label d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <h5 class="m-0">To do</h5>
+                                @if ($taskTodo->count() > 0)
+                                    <span class="badge rounded-pill bg-light text-dark fw-semibold">{{ $taskTodo->count() }}</span>
+                                @endif
+                            </div>
                             <div class="overflow-scroll-container" data-status="{{ $statusTodo->id }}">
                                 @foreach ($taskTodo as $task)
                                     <div class="border rounded-3 p-3 mb-2" data-id="{{ $task->id }}">
@@ -218,7 +256,12 @@
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header rounded-top" style="height: 10px; background: #FFB42E;"></div>
                         <div class="tasks-board-card-body p-3">
-                            <h5 class="card-label mb-2">In progress</h5>
+                            <div class="card-label d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <h5 class="m-0">In progress</h5>
+                                @if ($taskProgress->count() > 0)
+                                    <span class="badge rounded-pill bg-light text-dark fw-semibold">{{ $taskProgress->count() }}</span>
+                                @endif
+                            </div>
                             <div class="overflow-scroll-container" data-status="{{ $statusProgress->id }}">
                                 @foreach ($taskProgress as $task)
                                     <div class="border rounded-3 p-3 mb-2" data-id="{{ $task->id }}">
@@ -234,7 +277,12 @@
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header rounded-top" style="height: 10px; background: #6FAEC9"></div>
                         <div class="tasks-board-card-body p-3">
-                            <h5 class="card-label mb-2">Review</h5>
+                            <div class="card-label d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <h5 class="m-0">Review</h5>
+                                @if ($taskReview->count() > 0)
+                                    <span class="badge rounded-pill bg-light text-dark fw-semibold">{{ $taskReview->count() }}</span>
+                                @endif
+                            </div>
                             <div class="overflow-scroll-container" data-status="{{ $statusReview->id }}">
                                 @foreach ($taskReview as $task)
                                     <div class="border rounded-3 p-3 mb-2" data-id="{{ $task->id }}">
@@ -251,7 +299,12 @@
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header rounded-top" style="height: 10px; background: #C2410C;"></div>
                         <div class="tasks-board-card-body p-3">
-                            <h5 class="card-label mb-2">Revision</h5>
+                            <div class="card-label d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <h5 class="m-0">Revision</h5>
+                                @if ($taskRevision->count() > 0)
+                                    <span class="badge rounded-pill bg-light text-dark fw-semibold">{{ $taskRevision->count() }}</span>
+                                @endif
+                            </div>
                             <div class="overflow-scroll-container" data-status="{{ $statusRevision->id }}">
                                 @foreach ($taskRevision as $task)
                                     <div class="border rounded-3 p-3 mb-2" data-id="{{ $task->id }}">
@@ -268,7 +321,12 @@
                     <div class="task-card tasks-board-card bg-white rounded-3 shadow-sm">
                         <div class="task-header rounded-top" style="height: 10px; background: #7DB546;"></div>
                         <div class="tasks-board-card-body p-3">
-                            <h5 class="card-label mb-2">Complete</h5>
+                            <div class="card-label d-flex align-items-center justify-content-between gap-2 mb-2">
+                                <h5 class="m-0">Complete</h5>
+                                @if ($taskComplete->count() > 0)
+                                    <span class="badge rounded-pill bg-light text-dark fw-semibold">{{ $taskComplete->count() }}</span>
+                                @endif
+                            </div>
                             <div class="overflow-scroll-container" data-status="{{ $statusComplete->id }}">
                                 @foreach ($taskComplete as $task)
                                     <div class="border rounded-3 p-3 mb-2" data-id="{{ $task->id }}">

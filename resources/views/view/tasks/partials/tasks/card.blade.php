@@ -9,6 +9,7 @@
     $timerChipClass = 'task-running-timer px-2 py-1';
     $progressBalanceSeconds = \App\Support\TaskRunningTimer::progressBalanceSeconds($task);
     $revisionCycleBalances = \App\Support\TaskRunningTimer::revisionCycleBalances($task);
+    $latestRevisionNote = optional($task->revisionCycles->sortByDesc('cycle_number')->first())->notes;
     if ($showRunningTimer) {
         if ($frozenRemainMs !== null) {
             $timerChipClass .= $frozenRemainMs > 0 ? ' task-running-timer--ok' : ' task-running-timer--late';
@@ -86,6 +87,9 @@ html[data-theme="dark"] .task-running-timer--late {
     data-task-role="{{ $role === 'staff' ? 'staff' : ($role === 'executive' ? 'executive' : 'director') }}"
     data-task-level="{{ $task->difficulty->difficulty }}" data-task-diffid="{{ $task->difficulty->id }}"
     data-task-description-json='@json($task->description)'
+    data-task-revision-note='@json($latestRevisionNote)'
+    data-task-owner-id="{{ $task->id_user }}"
+    data-task-photos-json='@json($task->photos->map(fn ($p) => ["id" => $p->id, "url" => $p->url]))'
     data-task-progress-balance-seconds="{{ $progressBalanceSeconds !== null ? $progressBalanceSeconds : '' }}"
     data-task-revision-cycles-json='@json($revisionCycleBalances)'>
     <div class="d-flex justify-content-between align-items-start mb-2">

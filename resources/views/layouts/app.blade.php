@@ -50,7 +50,6 @@
     </div>
     {{-- Modal di luar <main> agar z-index di atas .modal-backdrop (main punya stacking context z-index:0) --}}
     @stack('modals')
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ asset('build/js/global.js') }}"></script>
     @yield('js')
 </body>

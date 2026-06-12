@@ -1,0 +1,27 @@
+erDiagram
+    roles ||--o{ users : "peran"
+    divisions ||--o{ users : "divisi"
+    statussdms ||--o{ users : "status_sdm"
+    statussdms ||--o{ users : "aktivitas_sdm"
+    last_graduates ||--o{ users : "lulusan"
+
+    users ||--o{ projects : "director"
+    status_projects ||--o{ projects : "status_proyek"
+    project_difficulties ||--o{ projects : "kesulitan_proyek"
+
+    projects }|--o{ project_user : "proyek"
+    users }|--o{ project_user : "anggota"
+
+    projects ||--o{ tasks : "memiliki"
+    users ||--o{ tasks : "ditugaskan"
+    users ||--o{ tasks : "pembuat"
+    status_tasks ||--o{ tasks : "status_task"
+    task_difficulties ||--o{ tasks : "kesulitan_task"
+
+    tasks ||--o{ task_revision_cycles : "revisi"
+
+    users ||--o{ administrations : "pengajuan"
+    category_administrations ||--o{ administrations : "kategori"
+    status_administrations ||--o{ administrations : "status_adm"
+
+    users ||--o{ notification_reads : "baca_notifikasi"

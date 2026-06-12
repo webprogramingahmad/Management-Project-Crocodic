@@ -29,6 +29,12 @@
                                 <option value="3">3 hours</option>
                                 <option value="4">4 hours</option>
                             </select>
+
+                            <div class="mt-3">
+                                <label class="form-label" for="rd_revision_notes">Revision notes</label>
+                                <textarea name="revision_notes" id="rd_revision_notes" class="form-control" rows="3"
+                                    placeholder="Jelaskan revisi yang harus dikerjakan..." maxlength="2000"></textarea>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">

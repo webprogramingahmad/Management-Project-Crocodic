@@ -53,47 +53,65 @@
                         <h5 class="fw-bold mb-4">Edit Project {{ ucwords($project->name) }}</h5>
                         <div class="mb-3">
                             <label class="form-label text-muted">Project</label>
-                            <input type="text" name="name" class="form-control" placeholder="Project name..."
+                            <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" placeholder="Project name..."
                                 value="{{ old('name', ucwords($project->name)) }}" required>
+                            @error('name')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="row mx-0 gx-2 mb-3 align-items-end">
                             <div class="col-12 col-md-4 ps-md-0">
                                 <label class="form-label text-muted small mb-1">Start</label>
-                                <input type="date" class="form-control form-control-sm project-date-picker" name="start_date"
+                                <input type="date" class="form-control form-control-sm project-date-picker @error('start_date') is-invalid @enderror" name="start_date"
                                     value="{{ old('start_date', $project->start_date?->format('Y-m-d')) }}" required>
+                                @error('start_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                             <div class="col-12 col-md-4">
                                 <label class="form-label text-muted small mb-1">End</label>
-                                <input type="date" class="form-control form-control-sm project-date-picker" name="end_date"
+                                <input type="date" class="form-control form-control-sm project-date-picker @error('end_date') is-invalid @enderror" name="end_date"
                                     value="{{ old('end_date', $project->end_date?->format('Y-m-d')) }}" required>
+                                @error('end_date')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
                             @include('view.projects.partials.project-duration-field', ['initialLabel' => $durationInitial])
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-muted">Level Project</label>
-                            <select name="id_difficulty" class="form-select" required>
+                            <select name="id_difficulty" class="form-select @error('id_difficulty') is-invalid @enderror" required>
                                 <option value="" disabled @selected(!old('id_difficulty', $project->id_difficulty))>-- Select Level --</option>
                                 @foreach($difficulties as $diff)
                                     <option value="{{ $diff->id }}" @selected(old('id_difficulty', $project->id_difficulty) == $diff->id)>{{ $diff->difficulty }}</option>
                                 @endforeach
                             </select>
+                            @error('id_difficulty')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-muted">Status Project</label>
-                            <select name="id_status" class="form-select" required>
+                            <select name="id_status" class="form-select @error('id_status') is-invalid @enderror" required>
                                 <option disabled>-- Select Status --</option>
                                 @foreach(($allowedStatusProjects ?? $statusprojects) as $status)
                                     <option value="{{ $status->id }}" {{ old('id_status', $project->id_status) == $status->id ? 'selected' : '' }}>{{ $status->status }}</option>
                                 @endforeach
                             </select>
+                            @error('id_status')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                         <div>
                             <label class="form-label text-muted">About Project</label>
-                            <textarea class="form-control" name="description" rows="4" placeholder="About project..."
-                                required> {{ old('description', $project->description) }}</textarea>
+                            <textarea class="form-control @error('description') is-invalid @enderror" name="description" rows="4" placeholder="About project..."
+                                required>{{ old('description', $project->description) }}</textarea>
+                            @error('description')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -116,13 +134,16 @@
                                         @endforeach
                                     </select>
                                 @else
-                                    <select name="id_director" class="form-select" required>
+                                    <select name="id_director" class="form-select @error('id_director') is-invalid @enderror" required>
                                         @foreach ($directors as $director)
                                             <option value="{{ $director->id }}" @selected($director->id == old('id_director', $project->id_director))>
                                                 {{ $director->name }}
                                             </option>
                                         @endforeach
                                     </select>
+                                    @error('id_director')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 @endif
                             </div>
 

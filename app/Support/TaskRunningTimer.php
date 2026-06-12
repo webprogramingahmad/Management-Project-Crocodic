@@ -62,6 +62,29 @@ class TaskRunningTimer
             ->all();
     }
 
+    /**
+     * Apakah task masuk Review tepat waktu (<= deadline level task)?
+     * Independen dari status saat ini, sehingga task yang sudah Complete pun tetap terhitung.
+     * Mengembalikan null jika task belum pernah masuk Review atau deadline tidak bisa dihitung.
+     */
+    public static function reviewedOnTime(Task $task): ?bool
+    {
+        $task->loadMissing('difficulty');
+
+        if (!$task->running_review_at) {
+            return null;
+        }
+
+        $deadline = self::deadlineFromProgressStart($task);
+        if (!$deadline) {
+            return null;
+        }
+
+        $reviewAt = $task->running_review_at->copy()->timezone(config('app.timezone'));
+
+        return $reviewAt->getTimestamp() <= $deadline->getTimestamp();
+    }
+
     /** Status task = sedang jalan (kolom In progress). */
     public static function isInProgressStatus(?\App\Models\StatusTask $status): bool
     {

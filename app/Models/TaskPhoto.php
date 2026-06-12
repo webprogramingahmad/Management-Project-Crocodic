@@ -4,35 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
-class TaskRevisionCycle extends Model
+class TaskPhoto extends Model
 {
-    use HasFactory, Notifiable;
+    use HasFactory;
 
-    protected $table = 'task_revision_cycles';
     public $incrementing = false;
     protected $keyType = 'string';
-
-    protected $fillable = [
-        'id_task',
-        'cycle_number',
-        'entered_revision_at',
-        'exited_revision_at',
-        'deadline_at',
-        'revision_hours',
-        'notes',
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            'entered_revision_at' => 'datetime',
-            'exited_revision_at' => 'datetime',
-            'deadline_at' => 'datetime',
-        ];
-    }
 
     protected static function boot()
     {
@@ -45,9 +25,27 @@ class TaskRevisionCycle extends Model
         });
     }
 
+    protected $fillable = [
+        'id_task',
+        'path',
+        'original_name',
+        'uploaded_by',
+    ];
+
+    protected $appends = ['url'];
+
     public function task()
     {
         return $this->belongsTo(Task::class, 'id_task');
     }
-}
 
+    public function uploader()
+    {
+        return $this->belongsTo(User::class, 'uploaded_by');
+    }
+
+    public function getUrlAttribute(): string
+    {
+        return Storage::url($this->path);
+    }
+}

@@ -9,7 +9,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <form id="form-edit-task" method="POST"
+        <form id="form-edit-task" method="POST" enctype="multipart/form-data"
             @if ($role === 'staff')
                 action="{{ route('staff.project.task.update', $project->id) }}"
             @elseif($role === 'executive')
@@ -45,6 +45,8 @@
                         <p class="mb-0 text-danger small">Medium: &gt; 6 hours</p>
                         <p class="mb-0 text-danger small">High: &lt; 6 hours</p>
                     </div>
+
+                    @include('view.tasks.partials.tasks.photo-uploader')
 
                     <div class="mb-0 mt-3">
                         <label class="form-label" for="edit_task_description">Notes</label>

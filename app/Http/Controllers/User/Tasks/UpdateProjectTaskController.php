@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Support\StatusSdmManager;
 use App\Support\TaskBoardAccess;
+use App\Support\TaskPhotoManager;
 use App\Support\TaskRunningTimer;
 
 class UpdateProjectTaskController extends Controller
@@ -32,13 +33,18 @@ class UpdateProjectTaskController extends Controller
             'name' => 'required|string|max:255',
             'id_difficulty' => 'required|uuid|exists:task_difficulties,id',
             'description' => 'nullable|string|max:5000',
+            'photos' => 'nullable|array|max:10',
+            'photos.*' => 'image|mimes:jpg,jpeg|max:1024',
         ]);
 
         $validated['description'] = ($validated['description'] ?? '') !== ''
             ? trim((string) $validated['description'])
             : null;
+        unset($validated['photos']);
 
         $task->update($validated);
+
+        TaskPhotoManager::storeFromRequest($request, $task, Auth::user());
 
         if ($task->user) {
             StatusSdmManager::syncForUser($task->user);

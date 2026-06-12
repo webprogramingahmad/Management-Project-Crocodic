@@ -6,8 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\StatusAdministration;
 use App\Models\StatusTask;
 use App\Models\User;
-use Carbon\Carbon;
+use App\Support\ActivityMetrics;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class IndexActivityController extends Controller
 {
@@ -16,43 +17,40 @@ class IndexActivityController extends Controller
      */
     public function __invoke(Request $request)
     {
-        $month = $request->get('month', now()->month);
-        $year = $request->get('year', now()->year);
+        $month = (int) $request->get('month', now()->month);
+        $year = (int) $request->get('year', now()->year);
 
         $acceptedStatus = StatusAdministration::where('name', 'accept')->first();
         $completeStatus = StatusTask::firstByClass('complete');
 
-        $users = User::with(['administrations', 'tasks', 'projects', 'division'])->orderBy('name', 'asc')->get();
+        $authUser = Auth::user();
+        $role = $authUser->role?->role;
 
-        $users->map(function ($user) use ($acceptedStatus, $completeStatus, $month, $year) {
-            $user->accepted_absent_count = $user->administrations
-                ->where('id_status', $acceptedStatus?->id)
-                ->filter(function ($item) use ($month, $year) {
-                    return Carbon::parse($item->start_date)->month == $month &&
-                        Carbon::parse($item->start_date)->year == $year;
-                })
-                ->count();
+        // Scope data sesuai wewenang:
+        // - executive : semua SDM
+        // - director  : SDM pada project yang ia pimpin + dirinya sendiri
+        // - staff     : hanya dirinya sendiri (self evaluation)
+        $viewMode = $role === 'staff' ? 'self' : 'team';
 
-            $user->completed_task_count = $user->tasks
-                ->where('id_status', $completeStatus?->id)
-                ->filter(function ($item) use ($month, $year) {
-                    return Carbon::parse($item->updated_at)->month == $month &&
-                        Carbon::parse($item->updated_at)->year == $year;
-                })
-                ->count();
+        $usersQuery = User::with(ActivityMetrics::EAGER_RELATIONS)
+            ->orderBy('name', 'asc');
 
-            $user->projects_joined_count = $user->projects
-                ->filter(function ($project) use ($month, $year) {
-                    return Carbon::parse($project->start_date)->year <= $year &&
-                        Carbon::parse($project->end_date)->year >= $year &&
-                        Carbon::parse($project->start_date)->month <= $month &&
-                        Carbon::parse($project->end_date)->month >= $month;
-                })
-                ->count();
+        if ($role === 'director') {
+            $directorId = $authUser->id;
+            $usersQuery->where(function ($q) use ($directorId) {
+                $q->whereHas('projects', fn ($p) => $p->where('id_director', $directorId))
+                    ->orWhere('id', $directorId);
+            });
+        } elseif ($role === 'staff') {
+            $usersQuery->where('id', $authUser->id);
+        }
 
-            return $user;
+        $users = $usersQuery->get();
+
+        $users->each(function ($user) use ($acceptedStatus, $completeStatus, $month, $year) {
+            ActivityMetrics::decorate($user, $month, $year, $acceptedStatus, $completeStatus);
         });
 
-        return view('view.activity.index', compact('users', 'month', 'year'));
+        return view('view.activity.index', compact('users', 'month', 'year', 'viewMode'));
     }
 }

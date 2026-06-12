@@ -3,6 +3,20 @@ import * as bootstrap from "bootstrap";
 
 const THEME_STORAGE_KEY = "theme";
 
+function initBootstrapComponents() {
+    // Pastikan komponen Bootstrap tersedia sebagai global untuk inline scripts.
+    if (!window.bootstrap) {
+        window.bootstrap = bootstrap;
+    }
+
+    // Inisialisasi eksplisit dropdown agar tidak bergantung penuh pada Data API.
+    document
+        .querySelectorAll('[data-bs-toggle="dropdown"]')
+        .forEach((toggleEl) => {
+            bootstrap.Dropdown.getOrCreateInstance(toggleEl);
+        });
+}
+
 function applyTheme(mode) {
     const t = mode === "dark" ? "dark" : "light";
     document.documentElement.setAttribute("data-theme", t);
@@ -220,6 +234,29 @@ function syncEditTaskModalFromCard(card) {
     }
 }
 
+function setModalRevisionNoteFromCard(card) {
+    const noteRow = document.querySelector(".modal-revision-note-row");
+    const noteEl = document.querySelector(".modal-revision-note");
+    if (!noteRow || !noteEl) return;
+    const attr = card.getAttribute("data-task-revision-note");
+    let note = null;
+    if (attr != null && attr !== "") {
+        try {
+            note = JSON.parse(attr);
+        } catch (e) {
+            note = null;
+        }
+    }
+    const text = note != null ? String(note).trim() : "";
+    if (text) {
+        noteEl.textContent = text;
+        noteRow.classList.remove("d-none");
+    } else {
+        noteEl.textContent = "";
+        noteRow.classList.add("d-none");
+    }
+}
+
 function setModalTaskDescriptionFromCard(card) {
     const descRow = document.querySelector(".modal-task-description-row");
     const descEl = document.querySelector(".modal-task-description");
@@ -244,6 +281,7 @@ function setModalTaskDescriptionFromCard(card) {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+    initBootstrapComponents();
     initThemeToggles();
     initProfilePopups();
     document.querySelectorAll('.task-link').forEach(function (card) {
@@ -331,6 +369,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             setModalTaskDescriptionFromCard(card);
+            setModalRevisionNoteFromCard(card);
             setModalTimeTrackingFromCard(card);
 
             var editLink = document.getElementById("edit-task-link");
@@ -384,12 +423,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         reviewDecisionModalForm.addEventListener("change", function (e) {
             if (e.target && e.target.name === "decision") {
+                var isRevision = e.target.value === "revision";
                 var wrap = document.getElementById("rd-revision-hours-wrap");
                 if (wrap) {
-                    wrap.classList.toggle(
-                        "d-none",
-                        e.target.value !== "revision"
-                    );
+                    wrap.classList.toggle("d-none", !isRevision);
+                }
+                var notes = document.getElementById("rd_revision_notes");
+                if (notes) {
+                    notes.required = isRevision;
                 }
             }
         });
@@ -427,6 +468,11 @@ document.addEventListener("DOMContentLoaded", function () {
             var sel = document.getElementById("rd_revision_hours");
             if (sel) {
                 sel.value = "2";
+            }
+            var notes = document.getElementById("rd_revision_notes");
+            if (notes) {
+                notes.value = "";
+                notes.required = false;
             }
             return true;
         }

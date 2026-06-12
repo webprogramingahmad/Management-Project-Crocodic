@@ -109,6 +109,12 @@
             <i class="bi bi-file-earmark-check-fill"></i>
         </a>
 
+        <a href="{{ route('staff.activity.index') }}"
+            class="btn {{ request()->routeIs('staff.activity.index') ? 'active' : '' }}"
+            data-sidebar-tip="Activity" aria-label="Activity">
+            <i class="bi bi-activity"></i>
+        </a>
+
         <a href="{{ route('staff.administration.index') }}"
             class="btn {{ request()->routeIs('staff.administration.index', 'staff.administration.create', 'staff.administration.show') ? 'active' : '' }}"
             data-sidebar-tip="Permission" aria-label="Permission">
@@ -132,6 +138,12 @@
             class="btn {{ request()->routeIs('director.tasks.index', 'director.project.tasks.index') ? 'active' : '' }}"
             data-sidebar-tip="Tasks" aria-label="Tasks">
             <i class="bi bi-file-earmark-check-fill"></i>
+        </a>
+
+        <a href="{{ route('director.activity.index') }}"
+            class="btn {{ request()->routeIs('director.activity.index') ? 'active' : '' }}"
+            data-sidebar-tip="Activity" aria-label="Activity">
+            <i class="bi bi-activity"></i>
         </a>
 
         <a href="{{ route('director.administration.index') }}"
@@ -158,11 +170,11 @@
             <i class="bi bi-file-earmark-check-fill"></i>
         </a>
 
-      <!--  <a href="{{ route('executive.activity.index') }}"
+        <a href="{{ route('executive.activity.index') }}"
             class="btn {{ request()->routeIs('executive.activity.index') ? 'active' : '' }}"
             data-sidebar-tip="Activity" aria-label="Activity">
             <i class="bi bi-activity"></i>
-        </a> -->
+        </a>
 
         <a href="{{ route('executive.administration.index') }}"
             class="btn {{ request()->routeIs('executive.administration.index', 'executive.administration.create', 'executive.administration.show') ? 'active' : '' }}"
@@ -172,7 +184,7 @@
 
         <a href="{{ route('executive.accounts.index') }}"
             class="btn {{ request()->routeIs('executive.accounts.index', 'executive.accounts.edit', 'executive.accounts.create', 'executive.accounts.show') ? 'active' : '' }}"
-            data-sidebar-tip="Executive" aria-label="Executive">
+            data-sidebar-tip="Account" aria-label="Account">
             <i class="fa-solid fa-user-shield"></i>
         </a>
     @endif

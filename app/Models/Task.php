@@ -79,6 +79,11 @@ class Task extends Model
         return $this->hasMany(TaskRevisionCycle::class, 'id_task')->orderBy('cycle_number');
     }
 
+    public function photos()
+    {
+        return $this->hasMany(TaskPhoto::class, 'id_task')->latest();
+    }
+
     /**
      * Task difficulty "Stand By" hanya memicu status SDM; tidak ditampilkan di board / dashboard / notifikasi.
      */

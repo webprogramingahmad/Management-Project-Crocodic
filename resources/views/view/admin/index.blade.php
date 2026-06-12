@@ -40,6 +40,42 @@
 
         .admin-index-toolbar {
             flex-shrink: 0;
+            position: relative;
+            z-index: 10;
+            overflow: visible;
+        }
+
+        .admin-index-toolbar .dropdown-menu {
+            z-index: 1080;
+        }
+
+        .admin-index-toolbar #dropdownProjectBtn {
+            transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+        }
+
+        html[data-theme="light"] .admin-index-toolbar #dropdownProjectBtn:hover,
+        html[data-theme="light"] .admin-index-toolbar #dropdownProjectBtn:focus,
+        html[data-theme="light"] .admin-index-toolbar #dropdownProjectBtn.show {
+            background-color: #6c757d;
+            border-color: #6c757d;
+            color: #fff;
+            box-shadow: none;
+        }
+
+        html[data-theme="light"] .admin-index-toolbar #projectDropdown .dropdown-item {
+            transition: background-color .12s ease, color .12s ease;
+        }
+
+        html[data-theme="light"] .admin-index-toolbar #projectDropdown .dropdown-item:hover,
+        html[data-theme="light"] .admin-index-toolbar #projectDropdown .dropdown-item:focus {
+            background-color: #e9ecef;
+            color: #212529;
+        }
+
+        html[data-theme="light"] .admin-index-toolbar #projectDropdown .dropdown-item.active {
+            background-color: #dee2e6;
+            color: #212529;
+            font-weight: 600;
         }
 
         .admin-index-outer-card {
@@ -95,7 +131,7 @@
                     </form>
                     <div class="dropdown">
                         <button id="dropdownProjectBtn"
-                            class="d-flex justify-content-between align-items-center btn btn-white border-secondary rounded-3 dropdown-toggle"
+                            class="d-flex justify-content-between align-items-center btn btn-outline-secondary rounded-3 dropdown-toggle"
                             style="width: 135px;" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <span id="selectedProject" class="text-truncate">
                                 {{ $selectedDivision?->divisi ?? 'Filter by division' }}
@@ -104,13 +140,13 @@
                         </button>
                         <ul class="dropdown-menu" id="projectDropdown">
                             <li>
-                                <a class="dropdown-item" href="{{ route('executive.accounts.index') }}">
+                                <a class="dropdown-item {{ !$selectedDivision ? 'active' : '' }}" href="{{ route('executive.accounts.index') }}">
                                     All Divisions
                                 </a>
                             </li>
                             @foreach ($divisions as $division)
                                 <li>
-                                    <a class="dropdown-item"
+                                    <a class="dropdown-item {{ $selectedDivision && (string) $selectedDivision->id === (string) $division->id ? 'active' : '' }}"
                                         href="{{ request()->fullUrlWithQuery(['division_id' => $division->id]) }}">
                                         {{ Str::ucfirst($division->divisi) }}
                                     </a>

@@ -1,0 +1,75 @@
+erDiagram
+    roles {
+        uuid id PK
+        string name
+    }
+    divisions {
+        uuid id PK
+        string name
+    }
+    users {
+        uuid id PK
+        string name
+        string email
+        uuid id_role FK
+        uuid id_divisi FK
+    }
+    status_projects {
+        uuid id PK
+        string class
+    }
+    project_difficulties {
+        uuid id PK
+        string difficulty
+    }
+    projects {
+        uuid id PK
+        string name
+        uuid id_director FK
+        uuid id_status FK
+        uuid id_difficulty FK
+    }
+    project_user {
+        uuid project_id FK
+        uuid user_id FK
+    }
+    status_tasks {
+        uuid id PK
+        string status
+    }
+    task_difficulties {
+        uuid id PK
+        string difficulty
+    }
+    tasks {
+        uuid id PK
+        string name
+        uuid id_user FK
+        uuid id_project FK
+        uuid id_status FK
+        uuid id_difficulty FK
+        uuid created_by FK
+    }
+    task_revision_cycles {
+        char id PK
+        char id_task FK
+        int cycle_number
+    }
+
+    roles ||--o{ users : "peran"
+    divisions ||--o{ users : "divisi"
+
+    users ||--o{ projects : "director_proyek"
+    status_projects ||--o{ projects : "status_proyek"
+    project_difficulties ||--o{ projects : "tingkat_proyek"
+
+    projects ||--o{ project_user : ""
+    users ||--o{ project_user : "anggota_tim"
+
+    projects ||--o{ tasks : "berisi"
+    users ||--o{ tasks : "ditugaskan"
+    users ||--o{ tasks : "pembuat_task"
+    status_tasks ||--o{ tasks : "status_task"
+    task_difficulties ||--o{ tasks : "kesulitan_task"
+
+    tasks ||--o{ task_revision_cycles : "riwayat_revisi"

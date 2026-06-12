@@ -28,6 +28,12 @@
                 <h5 class="mt-2 ms-1">Tasks</h5>
             </a>
 
+            <a href="{{ route('staff.activity.index') }}"
+                class="{{ request()->routeIs('staff.activity.index') ? 'active' : '' }}">
+                <i class="bi bi-activity"></i>
+                <h5 class="mt-2 ms-1">Activity</h5>
+            </a>
+
             <a href="{{ route('staff.administration.index') }}"
                 class="{{ request()->routeIs('staff.administration.index', 'staff.administration.create', 'staff.administration.show') ? 'active' : '' }}">
                 <i class="fa-solid fa-book"></i>
@@ -51,6 +57,12 @@
                 class="{{ request()->routeIs('director.tasks.index', 'director.project.tasks.index') ? 'active' : '' }}">
                 <i class="bi bi-file-earmark-check-fill"></i>
                 <h5 class="mt-2 ms-1">Tasks</h5>
+            </a>
+
+            <a href="{{ route('director.activity.index') }}"
+                class="{{ request()->routeIs('director.activity.index') ? 'active' : '' }}">
+                <i class="bi bi-activity"></i>
+                <h5 class="mt-2 ms-1">Activity</h5>
             </a>
 
             <a href="{{ route('director.administration.index') }}"
@@ -93,7 +105,7 @@
             <a href="{{ route('executive.accounts.index') }}"
                 class="{{ request()->routeIs('executive.accounts.index', 'executive.accounts.edit', 'executive.accounts.create', 'executive.accounts.show') ? 'active' : '' }}">
                 <i class="fa-solid fa-user-shield"></i>
-                <h5 class="mt-2 ms-1">Executive</h5>
+                <h5 class="mt-2 ms-1">Account</h5>
             </a>
         @endif
     </div>

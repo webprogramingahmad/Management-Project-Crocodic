@@ -1,10 +1,3 @@
-%% ERD — Sistem Informasi Manajemen Proyek (sesuai migrasi utama)
-%% Render / unduh: https://mermaid.live — paste isi file ini
-%%
-%% Catatan:
-%% - users punya DUA FK ke statussdms (id_status_sdm & id_activity_status_sdm); digambarkan dua garis berlabel.
-%% - tasks.id_project boleh NULL (relasi opsional ke projects).
-
 erDiagram
     roles ||--o{ users : "memiliki"
     divisions ||--o{ users : "berada_di"

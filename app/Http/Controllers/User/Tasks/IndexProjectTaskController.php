@@ -7,6 +7,7 @@ use App\Models\Project;
 use App\Models\Task;
 use App\Models\TaskDifficulty;
 use App\Support\TaskBucketQuery;
+use App\Support\TaskDateRangeFilter;
 use App\Support\TaskStatusCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,33 +31,29 @@ class IndexProjectTaskController extends Controller
         $projects = Project::whereHas('sdms', function ($q) {
             $q->where('users.id', Auth::id());
         })->get();
-        $date      = $request->input('date');
+        $dateFilter = TaskDateRangeFilter::fromRequest($request);
+        $bucketDateFilters = TaskDateRangeFilter::queryFilters($dateFilter);
+        $date = $dateFilter['date'];
 
         $bucketBase = Task::with(['user', 'difficulty', 'status', 'project'])
             ->where('tasks.id_project', $project->id)
             ->excludingStandByDifficulty();
 
         $taskTodo = TaskBucketQuery::forTaskQueryByStatusClass($bucketBase, TaskStatusCatalog::TODO, [
-            'date' => $date,
             'date_column' => 'tasks.created_at',
         ]);
         $taskProgress = TaskBucketQuery::forTaskQueryByStatusClass($bucketBase, TaskStatusCatalog::PROGRESS, [
-            'date' => $date,
             'date_column' => 'tasks.created_at',
         ]);
         $taskReview = TaskBucketQuery::forTaskQueryByStatusClass($bucketBase, TaskStatusCatalog::REVIEW, [
-            'date' => $date,
             'date_column' => 'tasks.created_at',
         ]);
         $taskRevision = TaskBucketQuery::forTaskQueryByStatusClass($bucketBase, TaskStatusCatalog::REVISION, [
-            'date' => $date,
             'date_column' => 'tasks.created_at',
         ]);
-        $taskComplete = TaskBucketQuery::forTaskQueryByStatusClass($bucketBase, TaskStatusCatalog::COMPLETE, [
-            'date' => $date,
+        $taskComplete = TaskBucketQuery::forTaskQueryByStatusClass($bucketBase, TaskStatusCatalog::COMPLETE, array_merge($bucketDateFilters, [
             'date_column' => 'tasks.updated_at',
-            'default_date' => now()->toDateString(),
-        ]);
+        ]));
 
         $difficulties = TaskDifficulty::oldest()
             ->where('difficulty', '!=', 'Stand By')
@@ -70,6 +67,6 @@ class IndexProjectTaskController extends Controller
         $statusRevision = $statusMap[TaskStatusCatalog::REVISION];
         $statusComplete = $statusMap[TaskStatusCatalog::COMPLETE];
 
-        return view('view.tasks.index-project', compact('tasks', 'project', 'projects', 'projectAllowsTaskCreation', 'difficulties', 'taskTodo', 'taskProgress', 'taskReview', 'taskRevision', 'taskComplete', 'statusTodo', 'statusProgress', 'statusReview', 'statusRevision', 'statusComplete', 'date'));
+        return view('view.tasks.index-project', compact('tasks', 'project', 'projects', 'projectAllowsTaskCreation', 'difficulties', 'taskTodo', 'taskProgress', 'taskReview', 'taskRevision', 'taskComplete', 'statusTodo', 'statusProgress', 'statusReview', 'statusRevision', 'statusComplete', 'date', 'dateFilter'));
     }
 }

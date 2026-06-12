@@ -1,0 +1,38 @@
+erDiagram
+    users {
+        uuid id PK
+        uuid id_status_sdm FK
+        uuid id_activity_status_sdm FK
+    }
+    statussdms {
+        uuid id PK
+        string status
+    }
+    administrations {
+        uuid id PK
+        uuid id_user FK
+        uuid id_category FK
+        uuid id_status FK
+    }
+    category_administrations {
+        uuid id PK
+        string name
+    }
+    status_administrations {
+        uuid id PK
+        string status
+    }
+    notification_reads {
+        bigint id PK
+        uuid id_user
+        string notification_key
+    }
+
+    statussdms ||--o{ users : "status_kepegawaian"
+    statussdms ||--o{ users : "status_aktivitas_kerja"
+
+    users ||--o{ administrations : "mengajukan"
+    category_administrations ||--o{ administrations : "jenis_izin"
+    status_administrations ||--o{ administrations : "status_pengajuan"
+
+    users ||--o{ notification_reads : "sudah_dibaca"
