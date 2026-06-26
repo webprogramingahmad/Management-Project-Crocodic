@@ -37,9 +37,9 @@
                         @php $diffName = strtolower(trim((string) $diff->difficulty)); @endphp
                         @if (! in_array($diffName, ['stand by', 'standby'], true))
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="id_difficulty" id="{{ $diff->difficulty }}"
+                            <input class="form-check-input" type="radio" name="id_difficulty" id="transfer-diff-{{ $diff->id }}"
                                 value="{{ $diff->id }}" required>
-                            <label class="form-check-label" for="{{ $diff->difficulty }}">{{ $diff->difficulty }}</label>
+                            <label class="form-check-label" for="transfer-diff-{{ $diff->id }}">{{ $diff->difficulty }}</label>
                         </div>
                         @endif
                     @endforeach
@@ -63,7 +63,7 @@
 
             <div class="modal-footer border-0 pt-1">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-submit task-modal-submit">Transfer Task</button>
+                <button type="submit" class="btn btn-submit task-modal-submit" data-task-form-submit>Transfer Task</button>
             </div>
         </form>
     </div>

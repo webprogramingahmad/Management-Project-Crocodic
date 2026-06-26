@@ -37,6 +37,7 @@ class TaskFlowSmokeTest extends TestCase
             'name' => 'Director new task',
             'id_difficulty' => $low->id,
             'id_project' => $project->id,
+            'description' => 'Deskripsi task director.',
         ])->assertRedirect(route('director.tasks.index'));
 
         $this->actingAs($director)->post(route('director.task.transfer'), [

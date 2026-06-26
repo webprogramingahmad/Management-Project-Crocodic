@@ -30,7 +30,9 @@ class TaskStatusTransitionTest extends TestCase
         $review = StatusTask::query()->where('class', 'review')->firstOrFail();
 
         $this->actingAs($staff)->post(route('staff.task.updateStatus', $task->id), ['id_status' => $progress->id])->assertOk();
-        $this->actingAs($staff)->post(route('staff.task.updateStatus', $task->id), ['id_status' => $review->id])->assertOk();
+        $this->actingAs($staff)->post(route('staff.task.submitReview', $task->id), [
+            'notes' => 'Hasil pengerjaan task selesai.',
+        ])->assertOk();
 
         $task->refresh();
         $this->assertSame('review', $task->status->class);

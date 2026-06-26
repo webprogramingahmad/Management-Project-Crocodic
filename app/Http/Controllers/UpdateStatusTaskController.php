@@ -85,6 +85,22 @@ class UpdateStatusTaskController extends Controller
             abort(403);
         }
 
+        // Ke Review dari In Progress / Revision hanya lewat formulir hasil kerja.
+        if ($newReview && ($oldProgress || $oldRevision)) {
+            TaskAuditLogger::warning('task_update_status', [
+                'result' => 'rejected',
+                'reason' => 'review_requires_submission',
+                'actor_id' => $actor->id,
+                'actor_role' => $actorRole,
+                'task_id' => $task->id,
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gunakan formulir hasil kerja untuk memindahkan task ke Review.',
+            ], 422);
+        }
+
         // Revision hanya lewat keputusan review (bukan drag).
         if ($newRevision) {
             TaskAuditLogger::warning('task_update_status', [

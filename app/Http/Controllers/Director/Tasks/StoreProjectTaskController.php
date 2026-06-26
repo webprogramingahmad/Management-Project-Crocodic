@@ -32,7 +32,7 @@ class StoreProjectTaskController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'id_difficulty' => 'required|uuid|exists:task_difficulties,id',
-            'description' => 'nullable|string|max:5000',
+            'description' => 'required|string|max:5000',
         ]);
 
         $statusTodo = StatusTask::firstByClass('todo');
@@ -48,7 +48,7 @@ class StoreProjectTaskController extends Controller
 
         Task::create([
             'name' => $request->name,
-            'description' => $request->input('description') ?: null,
+            'description' => trim((string) $request->input('description')),
             'id_user' => $userId,
             'id_status' => $statusTodo->id,
             'id_difficulty' => $request->id_difficulty,

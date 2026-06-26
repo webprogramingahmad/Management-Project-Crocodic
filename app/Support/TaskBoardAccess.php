@@ -84,4 +84,57 @@ class TaskBoardAccess
 
         abort(403);
     }
+
+    public static function isProjectDirector(User $user, Project $project): bool
+    {
+        return (string) $project->id_director === (string) $user->id;
+    }
+
+    public static function canRequestOwnershipTransfer(User $user, Task $task): bool
+    {
+        $user->loadMissing('role');
+        if ($user->role?->role !== 'staff') {
+            return false;
+        }
+
+        if ((string) $task->id_user !== (string) $user->id) {
+            return false;
+        }
+
+        return TaskOwnershipManager::isTransferable($task);
+    }
+
+    public static function canDirectReassignOwnership(User $user, Task $task): bool
+    {
+        $user->loadMissing('role');
+        if ($user->role?->role !== 'director') {
+            return false;
+        }
+
+        $task->loadMissing('project');
+        if (! $task->project) {
+            return false;
+        }
+
+        if (! self::isProjectDirector($user, $task->project)) {
+            return false;
+        }
+
+        return TaskOwnershipManager::isTransferable($task);
+    }
+
+    public static function canReviewOwnershipRequest(User $user, Task $task): bool
+    {
+        $user->loadMissing('role');
+        if ($user->role?->role !== 'director') {
+            return false;
+        }
+
+        $task->loadMissing('project');
+        if (! $task->project) {
+            return false;
+        }
+
+        return self::isProjectDirector($user, $task->project);
+    }
 }

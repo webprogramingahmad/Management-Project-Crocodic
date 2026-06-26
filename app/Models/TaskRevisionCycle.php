@@ -23,7 +23,13 @@ class TaskRevisionCycle extends Model
         'deadline_at',
         'revision_hours',
         'notes',
+        'links',
     ];
+
+    public function photos()
+    {
+        return $this->hasMany(TaskPhoto::class, 'id_revision_cycle');
+    }
 
     protected function casts(): array
     {

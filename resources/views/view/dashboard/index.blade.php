@@ -1692,6 +1692,37 @@ html[data-theme="dark"] .dashboard-elegant-dark .dash-notify-empty {
                                                     </div>
                                                 </div>
                                             </a>
+                                        @elseif ($note->kind === 'task_ownership_pending')
+                                            @php
+                                                $ownershipReq = $note->ownership_request;
+                                                $ownershipTask = $ownershipReq->task;
+                                                $taskRoute = route('director.tasks.index', ['project_id' => $ownershipTask->id_project], false);
+                                                $taskNotificationOpenUrl = route('dashboard.notifications.open', [
+                                                    'key' => $note->read_key,
+                                                    'to' => $taskRoute,
+                                                ]);
+                                            @endphp
+                                            <a href="{{ $taskNotificationOpenUrl }}"
+                                                class="dashboard-notify-grid-item text-decoration-none text-reset d-block">
+                                                <div class="bg-white rounded-2 p-2 text-black h-100 d-flex flex-column">
+                                                    <p class="fw-semibold small mb-1 text-truncate" title="{{ ucwords($ownershipTask->name ?? '-') }}">
+                                                        {{ ucwords($ownershipTask->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-secondary mb-0 text-break" style="line-height:1.35;">
+                                                        Pengajuan alih kepemilikan dari {{ ucwords($ownershipReq->requestedBy?->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-secondary mb-0 text-break" style="line-height:1.35;">
+                                                        Ke: {{ ucwords($ownershipReq->toUser?->name ?? '-') }}
+                                                    </p>
+                                                    <p class="small text-muted mb-2 mt-1" style="line-height:1.35;">
+                                                        {{ $ownershipReq->created_at?->format('d/m/Y H:i') }}
+                                                    </p>
+                                                    <div class="d-flex gap-1 flex-wrap align-items-center mt-auto">
+                                                        <span class="btn btn-sm rounded-4 border-0 task-meta-pill flex-shrink-0 align-self-start px-2 py-0"
+                                                            style="background-color:#6FAEC9;color:#fff;min-width:auto;line-height:1.3;">Transfer Pending</span>
+                                                    </div>
+                                                </div>
+                                            </a>
                                         @elseif ($note->kind === 'task_revision')
                                             @php
                                                 $task = $note->task;

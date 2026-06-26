@@ -168,6 +168,11 @@
         'director' => route('director.task.updateStatus', ['id' => '__TASK_ID__']),
         default => route('staff.task.updateStatus', ['id' => '__TASK_ID__']),
     };
+    $taskSubmitReviewUrlTemplate = match ($role) {
+        'director' => route('director.task.submitReview', ['id' => '__TASK_ID__']),
+        'staff' => route('staff.task.submitReview', ['id' => '__TASK_ID__']),
+        default => null,
+    };
     $dateFilter = $dateFilter ?? [
         'preset' => 'today',
         'label' => 'Today',
@@ -373,6 +378,16 @@
         @include('view.tasks.partials.tasks.modal-detail')
     </div>
 
+    @if (in_array($role, ['staff', 'director'], true))
+        @include('view.tasks.partials.tasks.modal-ownership-transfer')
+    @endif
+
+    @if (in_array($role, ['staff', 'director'], true))
+        @include('view.tasks.partials.tasks.modal-submit-review')
+    @endif
+
+    @include('view.tasks.partials.tasks.modal-work-results')
+
     @if ($role === 'director')
         @include('view.tasks.partials.tasks.modal-review-decision')
     @endif
@@ -390,11 +405,6 @@
             @include('view.tasks.partials.tasks.modal-transfer')
         </div>
     @endif
-
-    <div class="modal fade" id="edit-task" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
-        aria-labelledby="editTaskLabel" aria-hidden="true">
-        @include('view.tasks.partials.tasks.modal-edit')
-    </div>
 @endpush
 
 @section('js')
@@ -403,79 +413,19 @@
         window.__tasksBoardSortable = {
             role: @json($role),
             reviewId: @json($statusReview?->id),
+            progressId: @json($statusProgress?->id),
             completeId: @json($statusComplete?->id),
             revisionId: @json($statusRevision?->id),
+            statusUrlTemplate: @json($taskStatusUpdateUrlTemplate),
         };
+        window.__taskSubmitReviewUrlTemplate = @json($taskSubmitReviewUrlTemplate);
         @if ($role === 'director')
         window.REVIEW_DECISION_URL_TEMPLATE = @json(route('director.task.reviewDecision', ['id' => '__TASK_ID__']));
         @endif
-        (function () {
-            var cfg = window.__tasksBoardSortable || {};
-            if (cfg.role === "executive") {
-                return;
-            }
-            document.querySelectorAll(".overflow-scroll-container").forEach(function (column) {
-                new Sortable(column, {
-                    group: "tasks",
-                    animation: 150,
-                    onMove: function (evt) {
-                        var to = evt.to.getAttribute("data-status");
-                        var from = evt.from.getAttribute("data-status");
-                        if (cfg.revisionId && to === cfg.revisionId) {
-                            return false;
-                        }
-                        if (cfg.reviewId && cfg.completeId && from === cfg.reviewId && to === cfg.completeId) {
-                            return false;
-                        }
-                        return true;
-                    },
-                    onAdd: function (evt) {
-                        var taskId = evt.item.dataset.id;
-                        var newStatus = evt.to.dataset.status;
-                        var url = @json($taskStatusUpdateUrlTemplate).replace('__TASK_ID__', taskId);
-                        fetch(url, {
-                            method: "POST",
-                            headers: {
-                                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-                                "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({ id_status: newStatus }),
-                        })
-                            .then(function (res) {
-                                return res.json().then(function (data) {
-                                    return { ok: res.ok, data: data };
-                                });
-                            })
-                            .then(function (r) {
-                                if (!r.ok || !r.data.success) {
-                                    alert(r.data && r.data.message ? r.data.message : "Gagal update status");
-                                    evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex] || null);
-                                    return;
-                                }
-                                var data = r.data;
-                                if (typeof window.refreshTaskRunningTimerAfterStatus === "function") {
-                                    window.refreshTaskRunningTimerAfterStatus(
-                                        evt.item,
-                                        data.deadline_iso || null,
-                                        !!data.show_timer,
-                                        data.frozen_remain_ms != null ? data.frozen_remain_ms : null,
-                                        {
-                                            progress_balance_seconds: data.progress_balance_seconds ?? null,
-                                            revision_cycles: data.revision_cycles ?? [],
-                                        }
-                                    );
-                                }
-                            })
-                            .catch(function () {
-                                alert("Error update status");
-                                evt.from.insertBefore(evt.item, evt.from.children[evt.oldIndex] || null);
-                            });
-                    },
-                });
-            });
-        })();
 
         const projects = @json($projectsForTaskForms ?? $projects);
+
+        window.__taskBoardProjects = @json($role === 'staff' ? $projects : ($projectsForTaskForms ?? $projects));
 
         const projectSelect = document.getElementById('projectSelect');
         const userSelect = document.getElementById('userSelect');
@@ -509,6 +459,7 @@
             });
         }
     </script>
+    @include('view.tasks.partials.tasks.board-sortable-script')
     <!-- Using native date input to match create project UI -->
     <script src="{{ asset('build/js/main/tasks.js') }}"></script>
 @endsection

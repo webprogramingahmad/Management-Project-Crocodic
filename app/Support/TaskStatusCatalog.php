@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\StatusTask;
+use Illuminate\Support\Facades\Cache;
 
 class TaskStatusCatalog
 {
@@ -17,13 +18,29 @@ class TaskStatusCatalog
      */
     public static function mapByClass(): array
     {
-        return [
-            self::TODO => StatusTask::firstByClass(self::TODO),
-            self::PROGRESS => StatusTask::firstByClass(self::PROGRESS),
-            self::REVIEW => StatusTask::firstByClass(self::REVIEW),
-            self::REVISION => StatusTask::firstByClass(self::REVISION),
-            self::COMPLETE => StatusTask::firstByClass(self::COMPLETE),
-        ];
+        return Cache::remember('task_status_catalog_map', 3600, function () {
+            $statuses = StatusTask::query()->get();
+
+            $resolve = function (string $class) use ($statuses): ?StatusTask {
+                $labels = StatusTask::legacyLabelsForClass($class);
+
+                return $statuses->first(function (StatusTask $status) use ($class, $labels) {
+                    if (strtolower((string) ($status->class ?? '')) === strtolower($class)) {
+                        return true;
+                    }
+
+                    return in_array((string) ($status->status ?? ''), $labels, true);
+                });
+            };
+
+            return [
+                self::TODO => $resolve(self::TODO),
+                self::PROGRESS => $resolve(self::PROGRESS),
+                self::REVIEW => $resolve(self::REVIEW),
+                self::REVISION => $resolve(self::REVISION),
+                self::COMPLETE => $resolve(self::COMPLETE),
+            ];
+        });
     }
 }
 

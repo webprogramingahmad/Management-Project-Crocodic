@@ -9,6 +9,7 @@ use App\Models\TaskRevisionCycle;
 use App\Support\StatusSdmManager;
 use App\Support\TaskAuditLogger;
 use App\Support\TaskBoardAccess;
+use App\Support\TaskPhotoManager;
 use App\Support\TaskRunningTimer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -73,6 +74,9 @@ class ReviewTaskDecisionController extends Controller
             'decision' => 'required|in:complete,revision',
             'revision_hours' => 'required_if:decision,revision|nullable|in:2,3,4',
             'revision_notes' => 'required_if:decision,revision|nullable|string|max:2000',
+            'revision_links' => 'nullable|string|max:5000',
+            'photos' => 'nullable|array|max:10',
+            'photos.*' => 'image|mimes:jpg,jpeg|max:1024',
         ]);
 
         $completeStatus = StatusTask::query()->where('class', 'complete')->first()
@@ -97,14 +101,19 @@ class ReviewTaskDecisionController extends Controller
                 ->where('id_task', $task->id)
                 ->max('cycle_number')) + 1;
 
-            TaskRevisionCycle::query()->create([
+            $links = \App\Support\TaskSubmissionManager::normalizeLinks($validated['revision_links'] ?? null);
+
+            $revisionCycle = TaskRevisionCycle::query()->create([
                 'id_task' => $task->id,
                 'cycle_number' => $nextCycle,
                 'entered_revision_at' => $enteredAt,
                 'deadline_at' => $deadlineAt,
                 'revision_hours' => $hours,
                 'notes' => trim((string) $validated['revision_notes']),
+                'links' => $links,
             ]);
+
+            TaskPhotoManager::storeFromRequest($request, $task, Auth::user(), null, $revisionCycle->id);
         }
 
         $previousStatus = $task->status;

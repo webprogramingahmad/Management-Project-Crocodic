@@ -45,7 +45,7 @@ class StoreTaskController extends Controller
                 ->delete();
             $createdTask = Task::create([
                 'name' => 'Stand By',
-                'description' => $request->input('description') ?: null,
+                'description' => $request->filled('description') ? trim((string) $request->input('description')) : null,
                 'id_difficulty' => $standbyDiff->id,
                 'id_project' => null,
                 'id_status' => $statusTodo->id,
@@ -57,6 +57,7 @@ class StoreTaskController extends Controller
                 'name' => 'required|string|max:255',
                 'id_difficulty' => 'required|uuid|exists:task_difficulties,id',
                 'id_project' => ['required', 'uuid', Project::ruleExistsIdForTaskCreation()],
+                'description' => 'required|string|max:5000',
             ]);
 
             TaskBoardAccess::assertCanUseProjectForTaskMutation(Auth::user(), (string) $request->id_project);
@@ -71,7 +72,7 @@ class StoreTaskController extends Controller
             }
             $createdTask = Task::create([
                 'name' => $request->name,
-                'description' => $request->input('description') ?: null,
+                'description' => trim((string) $request->input('description')),
                 'id_difficulty' => $request->id_difficulty,
                 'id_project' => $request->id_project,
                 'id_status' => $statusTodo->id,

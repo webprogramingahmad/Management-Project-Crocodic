@@ -1,14 +1,14 @@
 import "./bootstrap";
 import * as bootstrap from "bootstrap";
 
+// Tersedia sebelum DOMContentLoaded agar inline script (profile edit, dll.) bisa pakai bootstrap.Modal.
+if (!window.bootstrap) {
+    window.bootstrap = bootstrap;
+}
+
 const THEME_STORAGE_KEY = "theme";
 
 function initBootstrapComponents() {
-    // Pastikan komponen Bootstrap tersedia sebagai global untuk inline scripts.
-    if (!window.bootstrap) {
-        window.bootstrap = bootstrap;
-    }
-
     // Inisialisasi eksplisit dropdown agar tidak bergantung penuh pada Data API.
     document
         .querySelectorAll('[data-bs-toggle="dropdown"]')
@@ -214,47 +214,263 @@ function updateTaskTrackingDataset(card, payload) {
     // Jika modal detail sedang buka untuk task ini, refresh data tracking realtime.
     var modal = document.getElementById("detail-task");
     if (modal && modal.classList.contains("show")) {
-        var editTaskIdInput = document.getElementById("edit_task_id");
-        var openedTaskId = editTaskIdInput ? editTaskIdInput.value : "";
+        var openedCard = window.__lastTaskCardForDetail;
         var cardTaskId = card.getAttribute("data-task-id") || "";
-        if (openedTaskId && cardTaskId && openedTaskId === cardTaskId) {
+        if (openedCard && (openedCard.getAttribute("data-task-id") || "") === cardTaskId) {
             setModalTimeTrackingFromCard(card);
         }
     }
 }
 
-function syncEditTaskModalFromCard(card) {
-    var normal = document.getElementById("edit-task-normal-fields");
-    var mainSubmit = document.getElementById("edit-task-submit-btn");
-    if (normal) {
-        normal.classList.remove("d-none");
-    }
-    if (mainSubmit) {
-        mainSubmit.classList.remove("d-none");
-    }
+function updateTaskWorkResultsButton(card) {
+    const btn = document.getElementById("btn-view-work-results");
+    if (!btn || !card) return;
+    btn.classList.remove("d-none");
 }
 
-function setModalRevisionNoteFromCard(card) {
-    const noteRow = document.querySelector(".modal-revision-note-row");
-    const noteEl = document.querySelector(".modal-revision-note");
-    if (!noteRow || !noteEl) return;
-    const attr = card.getAttribute("data-task-revision-note");
-    let note = null;
-    if (attr != null && attr !== "") {
-        try {
-            note = JSON.parse(attr);
-        } catch (e) {
-            note = null;
-        }
+function formatDurationSeconds(seconds) {
+    if (seconds == null || Number.isNaN(Number(seconds))) {
+        return "-";
     }
-    const text = note != null ? String(note).trim() : "";
-    if (text) {
-        noteEl.textContent = text;
-        noteRow.classList.remove("d-none");
-    } else {
-        noteEl.textContent = "";
-        noteRow.classList.add("d-none");
+    const abs = Math.abs(Math.floor(Number(seconds)));
+    const h = Math.floor(abs / 3600);
+    const m = Math.floor((abs % 3600) / 60);
+    const s = abs % 60;
+    return (
+        String(h).padStart(2, "0") +
+        ":" +
+        String(m).padStart(2, "0") +
+        ":" +
+        String(s).padStart(2, "0")
+    );
+}
+
+function renderWorkResultPhotos(photos) {
+    if (!photos || !photos.length) {
+        return "";
     }
+    return (
+        '<div class="work-result-photos">' +
+        photos
+            .map(function (p) {
+                return (
+                    '<a href="' +
+                    escapeHtml(p.url) +
+                    '" target="_blank" rel="noopener" class="modal-photo-thumb"><img src="' +
+                    escapeHtml(p.url) +
+                    '" alt=""></a>'
+                );
+            })
+            .join("") +
+        "</div>"
+    );
+}
+
+function renderWorkResultField(label, icon, rawContent) {
+    if (rawContent == null || String(rawContent).trim() === "") {
+        return "";
+    }
+    return (
+        '<div class="work-result-field">' +
+        '<div class="work-result-field-label"><i class="bi bi-' +
+        icon +
+        ' me-1"></i>' +
+        escapeHtml(label) +
+        "</div>" +
+        '<div class="work-result-field-value">' +
+        taskDescriptionToHtml(rawContent) +
+        "</div>" +
+        "</div>"
+    );
+}
+
+function renderWorkResultTiming(timing, allocationHint) {
+    if (!timing || timing.used_seconds == null) {
+        return "";
+    }
+    let html = "";
+    if (allocationHint) {
+        html +=
+            '<p class="work-result-allocation-hint mb-2">' +
+            escapeHtml(allocationHint) +
+            "</p>";
+    }
+    html += '<div class="work-result-timing">';
+    html += '<div class="work-result-timing-item">';
+    html +=
+        '<span class="work-result-timing-label"><i class="bi bi-stopwatch me-1"></i>Waktu pengerjaan</span>';
+    html +=
+        '<span class="work-result-timing-value">' +
+        escapeHtml(formatDurationSeconds(timing.used_seconds)) +
+        "</span>";
+    html += "</div>";
+    if (timing.is_overdue && timing.overdue_seconds != null) {
+        html += '<div class="work-result-timing-item work-result-timing-item--overdue">';
+        html +=
+            '<span class="work-result-timing-label"><i class="bi bi-exclamation-circle me-1"></i>Kelebihan waktu</span>';
+        html +=
+            '<span class="work-result-timing-value">' +
+            escapeHtml(formatDurationSeconds(timing.overdue_seconds)) +
+            "</span>";
+        html += "</div>";
+    } else if (
+        timing.balance_seconds != null &&
+        Number(timing.balance_seconds) > 0
+    ) {
+        html += '<div class="work-result-timing-item work-result-timing-item--ok">';
+        html +=
+            '<span class="work-result-timing-label"><i class="bi bi-check-circle me-1"></i>Tepat waktu</span>';
+        html +=
+            '<span class="work-result-timing-value">Sisa ' +
+            escapeHtml(formatDurationSeconds(timing.balance_seconds)) +
+            "</span>";
+        html += "</div>";
+    }
+    html += "</div>";
+    return html;
+}
+
+function renderWorkResultSubmissionBlock(submission, timing, allocationHint) {
+    if (!submission) {
+        return '<p class="small text-muted mb-0">Belum ada hasil dari staff.</p>';
+    }
+    let html = renderWorkResultTiming(timing, allocationHint);
+    html += renderWorkResultField("Deskripsi", "card-text", submission.notes);
+    html += renderWorkResultField("Link", "link-45deg", submission.links);
+    html += renderWorkResultPhotos(submission.photos);
+    return html;
+}
+
+function renderWorkResultDirectorBlock(director) {
+    if (!director) {
+        return "";
+    }
+    const hasContent =
+        director.notes ||
+        director.links ||
+        director.revision_hours ||
+        (director.photos && director.photos.length);
+    if (!hasContent) {
+        return "";
+    }
+    let html = '<div class="work-result-subsection">';
+    html += '<div class="work-result-subsection-label">Instruksi revisi</div>';
+    if (director.revision_hours) {
+        html +=
+            '<p class="work-result-allocation-hint">Batas waktu revisi: <strong>' +
+            escapeHtml(String(director.revision_hours)) +
+            " jam</strong></p>";
+    }
+    html += renderWorkResultField("Catatan", "chat-left-text", director.notes);
+    html += renderWorkResultField("Link", "link-45deg", director.links);
+    html += renderWorkResultPhotos(director.photos);
+    html += "</div>";
+    return html;
+}
+
+function renderWorkResultsMeta(meta) {
+    if (!meta) {
+        return "";
+    }
+    return (
+        '<div class="work-results-meta">' +
+        '<div class="work-results-meta-title">' +
+        escapeHtml(meta.task_name || "-") +
+        "</div>" +
+        '<div class="work-results-meta-row">' +
+        '<span class="text-muted"><i class="bi bi-person me-1"></i>Pemilik</span>' +
+        '<span class="fw-semibold">' +
+        escapeHtml(meta.owner_name || "-") +
+        "</span>" +
+        "</div>" +
+        '<div class="work-results-meta-row">' +
+        '<span class="text-muted"><i class="bi bi-kanban me-1"></i>Project</span>' +
+        '<span class="fw-semibold">' +
+        escapeHtml(meta.project_name || "-") +
+        "</span>" +
+        "</div>" +
+        "</div>"
+    );
+}
+
+function renderWorkResultsPayload(json) {
+    const body = document.getElementById("task-work-results-body");
+    if (!body) return;
+
+    const data = json && json.data ? json.data : json;
+    if (!data) {
+        body.innerHTML = '<p class="text-muted mb-0">Belum ada hasil kerja.</p>';
+        return;
+    }
+
+    let out = renderWorkResultsMeta(data.meta);
+
+    if (data.work_submission) {
+        out += '<div class="work-result-section">';
+        out += '<div class="work-result-section-title">Hasil kerja</div>';
+        out += renderWorkResultSubmissionBlock(
+            data.work_submission,
+            data.work_submission.timing || null,
+            data.work_submission.timing &&
+                data.work_submission.timing.allocated_seconds != null
+                ? "Batas waktu level task: " +
+                      formatDurationSeconds(
+                          data.work_submission.timing.allocated_seconds
+                      )
+                : null
+        );
+        out += "</div>";
+    }
+
+    (data.revision_cycles || []).forEach(function (cycle) {
+        const cycleNum = cycle.cycle_number || "-";
+        out += '<div class="work-result-section">';
+        out +=
+            '<div class="work-result-section-title">Revisi ' +
+            escapeHtml(String(cycleNum)) +
+            "</div>";
+        out += renderWorkResultDirectorBlock(cycle.director);
+        out += '<div class="work-result-subsection">';
+        out += '<div class="work-result-subsection-label">Hasil perbaikan</div>';
+        const allocHint =
+            cycle.director && cycle.director.revision_hours
+                ? "Batas waktu revisi: " + cycle.director.revision_hours + " jam"
+                : null;
+        out += renderWorkResultSubmissionBlock(
+            cycle.staff_submission,
+            cycle.timing || null,
+            allocHint
+        );
+        out += "</div>";
+        out += "</div>";
+    });
+
+    body.innerHTML =
+        out || '<p class="text-muted mb-0">Belum ada hasil kerja.</p>';
+}
+
+function openTaskWorkResultsModal(card) {
+    const tpl = window.__taskSubmissionsUrlTemplate;
+    const modalEl = document.getElementById("task-work-results-modal");
+    const body = document.getElementById("task-work-results-body");
+    if (!tpl || !modalEl || !card) return;
+    const taskId = card.dataset.taskId || "";
+    if (!taskId) return;
+    if (body) body.innerHTML = '<div class="text-center text-muted py-4">Memuat...</div>';
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    fetch(tpl.replace("__TASK_ID__", taskId), {
+        headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+    })
+        .then(function (r) {
+            if (!r.ok) throw new Error("failed");
+            return r.json();
+        })
+        .then(function (json) {
+            renderWorkResultsPayload(json);
+        })
+        .catch(function () {
+            if (body) body.innerHTML = '<p class="text-danger mb-0">Gagal memuat hasil kerja.</p>';
+        });
 }
 
 function setModalTaskDescriptionFromCard(card) {
@@ -280,13 +496,101 @@ function setModalTaskDescriptionFromCard(card) {
     }
 }
 
+function initTaskFormSubmitGuard() {
+    document.querySelectorAll("form").forEach(function (form) {
+        if (form.dataset.taskSubmitGuard === "1") {
+            return;
+        }
+        const hasGuardedSubmit = form.querySelector("[data-task-form-submit]");
+        if (!hasGuardedSubmit) {
+            return;
+        }
+        form.dataset.taskSubmitGuard = "1";
+        form.addEventListener("submit", function (e) {
+            if (form.dataset.submitting === "1") {
+                e.preventDefault();
+                return;
+            }
+            form.dataset.submitting = "1";
+            form.querySelectorAll("[data-task-form-submit], button[type='submit']").forEach(function (btn) {
+                btn.disabled = true;
+            });
+        });
+    });
+}
+
+function initCreateTaskModalForms() {
+    ["create-task", "create-taskproject"].forEach(function (modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) {
+            return;
+        }
+        const form = modal.querySelector("form");
+        if (!form) {
+            return;
+        }
+        const standbyRadio = modal.querySelector("#standby-level");
+        const taskNameGroup = modal.querySelector("#task-name-group");
+        const projectGroup = modal.querySelector("#project-group");
+        const descriptionGroup = modal.querySelector("#description-group");
+        const descriptionField = modal.querySelector(
+            "#create-task-description, #create-project-task-description"
+        );
+        const levelRadios = form.querySelectorAll('input[name="id_difficulty"]');
+
+        function toggleStandbyFields() {
+            const isStandby = standbyRadio && standbyRadio.checked;
+            if (taskNameGroup) {
+                taskNameGroup.style.display = isStandby ? "none" : "";
+                const nameInput = taskNameGroup.querySelector("input");
+                if (nameInput) {
+                    if (isStandby) {
+                        nameInput.removeAttribute("required");
+                    } else {
+                        nameInput.setAttribute("required", "required");
+                    }
+                }
+            }
+            if (projectGroup) {
+                projectGroup.style.display = isStandby ? "none" : "";
+                const projectSelect = projectGroup.querySelector("select");
+                if (projectSelect) {
+                    if (isStandby) {
+                        projectSelect.removeAttribute("required");
+                    } else {
+                        projectSelect.setAttribute("required", "required");
+                    }
+                }
+            }
+            if (descriptionGroup) {
+                descriptionGroup.style.display = isStandby ? "none" : "";
+            }
+            if (descriptionField) {
+                if (isStandby) {
+                    descriptionField.removeAttribute("required");
+                    descriptionField.value = "";
+                } else {
+                    descriptionField.setAttribute("required", "required");
+                }
+            }
+        }
+
+        levelRadios.forEach(function (radio) {
+            radio.addEventListener("change", toggleStandbyFields);
+        });
+        toggleStandbyFields();
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     initBootstrapComponents();
     initThemeToggles();
     initProfilePopups();
+    initTaskFormSubmitGuard();
+    initCreateTaskModalForms();
     document.querySelectorAll('.task-link').forEach(function (card) {
         card.addEventListener('click', function () {
-            window.__lastTaskCardForEdit = this;
+            window.__lastTaskCardForDetail = this;
             var taskId = card.dataset.taskId || '';
             // Title
             document.querySelector('.task-title').textContent = card.dataset.taskTitle || '-';
@@ -294,7 +598,7 @@ document.addEventListener("DOMContentLoaded", function () {
             var statusText = card.dataset.taskStatus || '-';
             var statusBadge = document.querySelector('.status-todo');
             statusBadge.textContent = statusText;
-            let statusColor = '#6c757d';
+            let statusColor = '#EA4949';
             switch (statusText.toLowerCase()) {
                 case 'todo': statusColor = '#EA4949'; break;
                 case 'in progress': statusColor = '#FFB42E'; break;
@@ -339,54 +643,18 @@ document.addEventListener("DOMContentLoaded", function () {
             diffBadge.style.backgroundColor = diffColor;
             diffBadge.style.color = '#fff';
 
-            var editTaskIdInput = document.getElementById('edit_task_id');
-            if (editTaskIdInput) {
-                editTaskIdInput.value = taskId;
-            }
-            var editTaskNameInput = document.getElementById('edit_task_name');
-            if (editTaskNameInput) {
-                editTaskNameInput.value = card.dataset.taskTitle || '';
-            }
-            var editDiffId = card.dataset.taskDiffid;
-            if (editDiffId) {
-                var diffRadio = document.getElementById('edit_diff_' + editDiffId);
-                if (diffRadio) diffRadio.checked = true;
-            }
-
-            var editTaskDesc = document.getElementById("edit_task_description");
-            if (editTaskDesc) {
-                var descAttr = card.getAttribute("data-task-description-json");
-                var descVal = "";
-                if (descAttr != null && descAttr !== "") {
-                    try {
-                        var parsed = JSON.parse(descAttr);
-                        descVal = parsed != null ? String(parsed) : "";
-                    } catch (e) {
-                        descVal = "";
-                    }
-                }
-                editTaskDesc.value = descVal;
-            }
-
             setModalTaskDescriptionFromCard(card);
-            setModalRevisionNoteFromCard(card);
             setModalTimeTrackingFromCard(card);
+            updateTaskWorkResultsButton(card);
 
-            var editLink = document.getElementById("edit-task-link");
-            if (editLink) {
-                var r = card.dataset.taskRole;
-                var st = (card.dataset.taskStatus || "").toLowerCase();
-                var hideEdit =
-                    r === "executive" || (r === "staff" && st === "review");
-                editLink.classList.toggle("d-none", hideEdit);
+            var rdBtn = document.getElementById("detail-review-decision-btn");
+            if (rdBtn) {
+                var isReview = statusText.toLowerCase() === "review";
+                rdBtn.classList.toggle("d-none", !isReview);
             }
 
-            var rdFooter = document.getElementById("detail-task-review-footer");
-            var rdBtn = document.getElementById("detail-review-decision-btn");
-            if (rdFooter && rdBtn) {
-                var isReview = statusText.toLowerCase() === "review";
-                rdFooter.classList.toggle("d-none", !isReview);
-                rdBtn.classList.toggle("d-none", !isReview);
+            if (typeof window.updateTaskDetailOwnershipUi === "function") {
+                window.updateTaskDetailOwnershipUi(card);
             }
         });
     });
@@ -445,9 +713,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 return false;
             }
             var tid =
-                (document.getElementById("edit_task_id") || {}).value ||
-                (window.__lastTaskCardForEdit &&
-                    window.__lastTaskCardForEdit.dataset.taskId) ||
+                (window.__lastTaskCardForDetail &&
+                    window.__lastTaskCardForDetail.dataset.taskId) ||
                 "";
             if (!tid) {
                 return false;
@@ -473,6 +740,11 @@ document.addEventListener("DOMContentLoaded", function () {
             if (notes) {
                 notes.value = "";
                 notes.required = false;
+            }
+            var links = document.getElementById("rd_revision_links");
+            if (links) links.value = "";
+            if (window.__resetTaskPhotoUploader && window.__resetTaskPhotoUploader.rd_revision_photos) {
+                window.__resetTaskPhotoUploader.rd_revision_photos();
             }
             return true;
         }
@@ -519,65 +791,14 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    /*
-     * View task → Edit: tutup modal detail dulu, lalu buka edit (satu modal aktif).
-     * Menghindari dua tombol X sekaligus — klik X sering menutup detail (bukan edit) sehingga semua overlay hilang.
-     */
-    var editFromDetailLink = document.getElementById("edit-task-link");
-    if (editFromDetailLink) {
-        function openEditAfterDetailClosed() {
-            var detailEl = document.getElementById("detail-task");
-            var editEl = document.getElementById("edit-task");
-            if (!detailEl || !editEl) {
-                return;
-            }
-            window.__taskEditOpenedFromDetail = true;
-            var detailModal =
-                bootstrap.Modal.getInstance(detailEl) ||
-                bootstrap.Modal.getOrCreateInstance(detailEl);
-            function onDetailHidden() {
-                detailEl.removeEventListener("hidden.bs.modal", onDetailHidden);
-                bootstrap.Modal.getOrCreateInstance(editEl).show();
-            }
-            detailEl.addEventListener("hidden.bs.modal", onDetailHidden, { once: true });
-            detailModal.hide();
-        }
-        editFromDetailLink.addEventListener("click", function (e) {
+    var workResultsBtn = document.getElementById("btn-view-work-results");
+    if (workResultsBtn) {
+        workResultsBtn.addEventListener("click", function (e) {
             e.preventDefault();
             e.stopPropagation();
-            if (editFromDetailLink.classList.contains("d-none")) {
-                return;
+            if (window.__lastTaskCardForDetail) {
+                openTaskWorkResultsModal(window.__lastTaskCardForDetail);
             }
-            openEditAfterDetailClosed();
-        });
-        editFromDetailLink.addEventListener("keydown", function (e) {
-            if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                openEditAfterDetailClosed();
-            }
-        });
-    }
-
-    var editTaskModalEl = document.getElementById("edit-task");
-    if (editTaskModalEl) {
-        editTaskModalEl.addEventListener("show.bs.modal", function () {
-            var c = window.__lastTaskCardForEdit;
-            if (c) {
-                syncEditTaskModalFromCard(c);
-            }
-        });
-        editTaskModalEl.addEventListener("hidden.bs.modal", function () {
-            if (!window.__taskEditOpenedFromDetail) {
-                return;
-            }
-            window.__taskEditOpenedFromDetail = false;
-            var detailEl = document.getElementById("detail-task");
-            if (!detailEl) {
-                return;
-            }
-            setTimeout(function () {
-                bootstrap.Modal.getOrCreateInstance(detailEl).show();
-            }, 400);
         });
     }
 
@@ -719,3 +940,183 @@ function updateTaskCardStatus(idTask, newStatus) {
 }
 // Contoh pemakaian:
 // updateTaskCardStatus('id-task-uuid', 'In Progress');
+
+function populateOwnershipRecipientSelect(selectEl, projectId, ownerId, selectedId) {
+    if (!selectEl) return;
+    const projects = window.__taskBoardProjects || [];
+    const project = projects.find((p) => String(p.id) === String(projectId));
+    selectEl.innerHTML = '<option value="" disabled selected>Pilih SDM</option>';
+    if (!project || !project.sdms) return;
+    project.sdms.forEach((sdm) => {
+        if (ownerId && String(sdm.id) === String(ownerId)) return;
+        const opt = document.createElement("option");
+        opt.value = sdm.id;
+        const isAbsent = Boolean(sdm.is_absent_now);
+        const returnLabel = sdm.absent_returns_on_label
+            ? ` — kembali ${sdm.absent_returns_on_label}`
+            : "";
+        opt.textContent = isAbsent
+            ? `${sdm.name} (Absent${returnLabel})`
+            : sdm.name;
+        if (isAbsent) opt.disabled = true;
+        if (selectedId && String(sdm.id) === String(selectedId)) {
+            opt.selected = true;
+        }
+        selectEl.appendChild(opt);
+    });
+}
+
+window.updateTaskDetailOwnershipUi = function (card) {
+    const ownershipSection = document.getElementById("detail-ownership-section");
+    if (!ownershipSection || !card) return;
+
+    const canRequest = card.dataset.taskCanRequestOwnership === "1";
+    const canDirect = card.dataset.taskCanDirectReassign === "1";
+    const canReview = card.dataset.taskCanReviewOwnership === "1";
+    const pendingId = card.dataset.taskPendingTransferId || "";
+    const hasPending = Boolean(pendingId);
+
+    const showOwnershipButtons = !hasPending && (canRequest || canDirect);
+    ownershipSection.classList.toggle("d-none", !showOwnershipButtons);
+    ownershipSection.classList.toggle("d-flex", showOwnershipButtons);
+
+    const pendingWrap = document.getElementById("detail-ownership-pending");
+    const pendingText = document.getElementById("detail-ownership-pending-text");
+    const pendingTo = document.getElementById("detail-ownership-pending-to");
+    const pendingReason = document.getElementById("detail-ownership-pending-reason");
+    const btnRequest = document.getElementById("btn-request-ownership-transfer");
+    const btnDirect = document.getElementById("btn-direct-ownership-reassign");
+
+    btnRequest?.classList.toggle("d-none", !canRequest);
+    btnDirect?.classList.toggle("d-none", !canDirect);
+
+    if (hasPending) {
+        pendingWrap?.classList.remove("d-none");
+        if (pendingText) {
+            pendingText.textContent = canReview
+                ? "Pengajuan alih kepemilikan menunggu persetujuan Anda."
+                : "Pengajuan alih kepemilikan menunggu persetujuan director.";
+        }
+        if (pendingTo) pendingTo.textContent = card.dataset.taskPendingTransferToUser || "-";
+        if (pendingReason) pendingReason.textContent = card.dataset.taskPendingTransferReason || "-";
+        const reviewActions = document.getElementById("detail-ownership-review-actions");
+        reviewActions?.classList.toggle("d-none", !canReview);
+
+        const approveForm = document.getElementById("form-ownership-approve");
+        const rejectForm = document.getElementById("form-ownership-reject");
+        const taskId = card.dataset.taskId || "";
+        const routes = window.__ownershipDirectorRoutes || {};
+        if (canReview && routes.approve && routes.reject) {
+            if (approveForm) {
+                approveForm.action = routes.approve
+                    .replace("__TASK__", taskId)
+                    .replace("__REQUEST__", pendingId);
+            }
+            if (rejectForm) {
+                rejectForm.action = routes.reject
+                    .replace("__TASK__", taskId)
+                    .replace("__REQUEST__", pendingId);
+            }
+            populateOwnershipRecipientSelect(
+                document.getElementById("ownership-approve-to-user"),
+                card.dataset.taskProject || "",
+                card.dataset.taskOwnerId || "",
+                card.dataset.taskPendingTransferToUserId || ""
+            );
+        }
+    } else {
+        pendingWrap?.classList.add("d-none");
+        document.getElementById("detail-ownership-review-actions")?.classList.add("d-none");
+    }
+
+    updateTaskWorkResultsButton(card);
+};
+
+function initTaskOwnershipTransferUi() {
+    const transferModalEl = document.getElementById("ownership-transfer-modal");
+    if (!transferModalEl) return;
+
+    const transferForm = document.getElementById("ownership-transfer-form");
+    const transferTitle = document.getElementById("ownership-transfer-modal-title");
+    const transferTaskName = document.getElementById("ownership-transfer-task-name");
+    const transferReason = document.getElementById("ownership-transfer-reason");
+    const transferReasonHint = document.getElementById("ownership-transfer-reason-hint");
+    const transferSubmit = document.getElementById("ownership-transfer-submit");
+    const transferSelect = document.getElementById("ownership-transfer-to-user");
+    const routes = window.__ownershipTransferRoutes || {};
+    let transferMode = "request";
+
+    function openTransferModal(card, mode) {
+        if (!card || !transferForm) return;
+        transferMode = mode;
+        const taskId = card.dataset.taskId || "";
+        const taskTitle = card.dataset.taskTitle || "-";
+        const ownerId = card.dataset.taskOwnerId || "";
+        const projectId = card.dataset.taskProject || "";
+
+        if (transferTaskName) transferTaskName.textContent = taskTitle;
+        populateOwnershipRecipientSelect(transferSelect, projectId, ownerId, null);
+
+        if (mode === "direct" && routes.directorReassign) {
+            transferForm.action = routes.directorReassign.replace("__TASK__", taskId);
+            if (transferTitle) transferTitle.textContent = "Alihkan kepemilikan";
+            if (transferSubmit) transferSubmit.textContent = "Alihkan";
+            if (transferReason) transferReason.removeAttribute("required");
+            if (transferReasonHint) transferReasonHint.textContent = "Opsional.";
+        } else if (routes.staffRequest) {
+            transferForm.action = routes.staffRequest.replace("__TASK__", taskId);
+            if (transferTitle) transferTitle.textContent = "Ajukan alih kepemilikan";
+            if (transferSubmit) transferSubmit.textContent = "Kirim pengajuan";
+            if (transferReason) transferReason.setAttribute("required", "required");
+            if (transferReasonHint) transferReasonHint.textContent = "Wajib diisi — jelaskan alasan pengajuan.";
+        }
+
+        const detailModal = document.getElementById("detail-task");
+        if (detailModal) {
+            const detailInst = bootstrap.Modal.getInstance(detailModal);
+            if (detailInst) detailInst.hide();
+        }
+
+        setTimeout(function () {
+            bootstrap.Modal.getOrCreateInstance(transferModalEl).show();
+        }, 300);
+    }
+
+    document.getElementById("btn-request-ownership-transfer")?.addEventListener("click", function () {
+        const card = window.__lastTaskCardForDetail;
+        openTransferModal(card, "request");
+    });
+
+    document.getElementById("btn-direct-ownership-reassign")?.addEventListener("click", function () {
+        const card = window.__lastTaskCardForDetail;
+        openTransferModal(card, "direct");
+    });
+
+    transferModalEl.addEventListener("hidden.bs.modal", function () {
+        if (transferForm) transferForm.reset();
+        const detailModal = document.getElementById("detail-task");
+        if (detailModal && window.__lastTaskCardForDetail) {
+            setTimeout(function () {
+                bootstrap.Modal.getOrCreateInstance(detailModal).show();
+                window.updateTaskDetailOwnershipUi(window.__lastTaskCardForDetail);
+            }, 200);
+        }
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    initTaskOwnershipTransferUi();
+
+    const detailModal = document.getElementById("detail-task");
+    if (detailModal) {
+        detailModal.addEventListener("show.bs.modal", function (ev) {
+            const card = ev.relatedTarget || window.__lastTaskCardForDetail;
+            if (card && typeof window.updateTaskDetailOwnershipUi === "function") {
+                window.updateTaskDetailOwnershipUi(card);
+            }
+            if (card && typeof updateTaskWorkResultsButton === "function") {
+                updateTaskWorkResultsButton(card);
+            }
+        });
+    }
+});

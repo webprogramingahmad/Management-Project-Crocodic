@@ -33,6 +33,7 @@ class DashboardNonAdminNotifications
             ->get();
 
         $reviewTasks = collect();
+        $ownershipPendingRequests = collect();
         if ($user->role?->role === 'director') {
             $reviewTasks = Task::query()
                 ->with(['project', 'status', 'user.division'])
@@ -45,6 +46,16 @@ class DashboardNonAdminNotifications
                 ->where('id_user', '!=', $user->id)
                 ->orderByDesc('running_review_at')
                 ->orderByDesc('updated_at')
+                ->limit(25)
+                ->get();
+
+            $ownershipPendingRequests = \App\Models\TaskOwnershipTransferRequest::query()
+                ->with(['task.project', 'task.status', 'requestedBy', 'toUser'])
+                ->where('status', \App\Models\TaskOwnershipTransferRequest::STATUS_PENDING)
+                ->whereHas('task.project', function ($q) use ($user) {
+                    $q->where('id_director', $user->id);
+                })
+                ->orderByDesc('created_at')
                 ->limit(25)
                 ->get();
         }
@@ -142,6 +153,19 @@ class DashboardNonAdminNotifications
                     (string) $task->id,
                     'review',
                     $task->running_review_at ?? $task->updated_at
+                ),
+            ]);
+        }
+        foreach ($ownershipPendingRequests as $ownershipRequest) {
+            $dashboardNotifications->push((object) [
+                'kind' => 'task_ownership_pending',
+                'sort_at' => $ownershipRequest->created_at,
+                'ownership_request' => $ownershipRequest,
+                'read_key' => self::buildReadKey(
+                    'task_ownership_pending',
+                    (string) $ownershipRequest->id,
+                    'pending',
+                    $ownershipRequest->created_at
                 ),
             ]);
         }

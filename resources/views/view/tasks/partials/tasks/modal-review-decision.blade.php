@@ -7,7 +7,7 @@
                     <h5 class="modal-title fw-semibold" id="reviewDecisionModalLabel">Review decision</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form id="form-review-decision-modal" method="POST" action="">
+                <form id="form-review-decision-modal" method="POST" action="" enctype="multipart/form-data">
                     @csrf
                     <div class="modal-body">
                         <p class="small text-muted mb-3">Mark this task complete or send it back for revision. If you
@@ -31,10 +31,21 @@
                             </select>
 
                             <div class="mt-3">
-                                <label class="form-label" for="rd_revision_notes">Revision notes</label>
+                                <label class="form-label" for="rd_revision_notes">Revision notes <span class="text-danger">*</span></label>
                                 <textarea name="revision_notes" id="rd_revision_notes" class="form-control" rows="3"
                                     placeholder="Jelaskan revisi yang harus dikerjakan..." maxlength="2000"></textarea>
                             </div>
+                            <div class="mt-3">
+                                <label class="form-label" for="rd_revision_links">Link referensi (opsional)</label>
+                                <textarea name="revision_links" id="rd_revision_links" class="form-control" rows="2" maxlength="5000"
+                                    placeholder="Satu link per baris (opsional)"></textarea>
+                            </div>
+                            @include('view.tasks.partials.tasks.photo-uploader-field', [
+                                'inputId' => 'rd_revision_photos',
+                                'previewId' => 'rd_revision_photo_preview',
+                                'resetModalId' => 'review-decision-modal',
+                                'label' => 'Gambar referensi (opsional)',
+                            ])
                         </div>
                     </div>
                     <div class="modal-footer">

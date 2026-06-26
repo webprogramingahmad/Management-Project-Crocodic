@@ -46,6 +46,7 @@ class TaskRoleAccessTest extends TestCase
             ->post(route('director.task.reviewDecision', $task->id), [
                 'decision' => 'revision',
                 'revision_hours' => 2,
+                'revision_notes' => 'Perlu perbaikan pada layout halaman.',
             ])
             ->assertRedirect(route('director.tasks.index'));
 
@@ -62,8 +63,13 @@ class TaskRoleAccessTest extends TestCase
         $task = $this->makeTask($staff, $project, 'todo');
 
         $this->actingAs($director)
+            ->from(route('director.tasks.index'))
             ->post(route('director.task.reviewDecision', $task->id), ['decision' => 'complete'])
-            ->assertStatus(422);
+            ->assertRedirect(route('director.tasks.index'))
+            ->assertSessionHas('error');
+
+        $task->refresh();
+        $this->assertSame('todo', $task->status->class);
     }
 
     public function test_staff_cannot_update_other_user_task(): void
@@ -93,6 +99,7 @@ class TaskRoleAccessTest extends TestCase
                 'name' => 'Unauthorized project task',
                 'id_difficulty' => TaskDifficulty::query()->where('difficulty', 'Low')->firstOrFail()->id,
                 'id_project' => $project->id,
+                'description' => 'Deskripsi task untuk uji akses.',
             ])
             ->assertForbidden();
 

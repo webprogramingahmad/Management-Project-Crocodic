@@ -84,6 +84,27 @@ class Task extends Model
         return $this->hasMany(TaskPhoto::class, 'id_task')->latest();
     }
 
+    public function submissions()
+    {
+        return $this->hasMany(TaskSubmission::class, 'id_task')->orderBy('cycle_number');
+    }
+
+    public function ownershipTransferRequests()
+    {
+        return $this->hasMany(TaskOwnershipTransferRequest::class, 'id_task');
+    }
+
+    public function pendingOwnershipTransferRequest()
+    {
+        return $this->hasOne(TaskOwnershipTransferRequest::class, 'id_task')
+            ->where('status', TaskOwnershipTransferRequest::STATUS_PENDING);
+    }
+
+    public function ownershipTransfers()
+    {
+        return $this->hasMany(TaskOwnershipTransfer::class, 'id_task');
+    }
+
     /**
      * Task difficulty "Stand By" hanya memicu status SDM; tidak ditampilkan di board / dashboard / notifikasi.
      */

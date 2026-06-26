@@ -1,7 +1,7 @@
 <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
         <div class="modal-header border-b-8 border-black pb-2">
-            <h5 class="modal-title fw-bold" id="transferTaskModalLabel">Create Task</h5>
+            <h5 class="modal-title fw-bold" id="createProjectTaskModalLabel">Create Task</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
@@ -26,9 +26,9 @@
                     <label class="form-label d-block">Task Level</label>
                     @foreach ($difficulties as $diff)
                         <div class="form-check form-check-inline">
-                            <input class="form-check-input" type="radio" name="id_difficulty" id="{{ $diff->difficulty }}"
+                            <input class="form-check-input" type="radio" name="id_difficulty" id="create-project-diff-{{ $diff->id }}"
                                 value="{{ $diff->id }}" required>
-                            <label class="form-check-label" for="{{ $diff->difficulty }}">{{ $diff->difficulty }}</label>
+                            <label class="form-check-label" for="create-project-diff-{{ $diff->id }}">{{ $diff->difficulty }}</label>
                         </div>
                     @endforeach
                 </div>
@@ -40,9 +40,9 @@
                 </div>
 
                 <div class="mb-0 mt-3">
-                    <label class="form-label" for="create-project-task-description">Notes</label>
-                    <textarea class="form-control" id="create-project-task-description" name="description" rows="3"
-                        placeholder="Notes...">{{ old('description') }}</textarea>
+                    <label class="form-label" for="create-project-task-description">Description <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="create-project-task-description" name="description" rows="3" required
+                        placeholder="Jelaskan task yang akan dikerjakan...">{{ old('description') }}</textarea>
                     @error('description')
                         <div class="invalid-feedback d-block">{{ $message }}</div>
                     @enderror
@@ -51,7 +51,7 @@
 
             <div class="modal-footer border-0 pt-1">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="submit" class="btn btn-submit">Create Task</button>
+                <button type="submit" class="btn btn-submit task-modal-submit" data-task-form-submit>Create Task</button>
             </div>
         </form>
     </div>

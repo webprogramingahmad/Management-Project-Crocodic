@@ -9,12 +9,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Mengelola upload & hapus foto bukti hasil kerja (Work Evidence) pada task.
- * Hanya pemilik task (id_user) yang boleh meng-upload / menghapus foto.
+ * Mengelola upload foto pada task (hasil kerja / referensi revisi director).
  */
 class TaskPhotoManager
 {
     public const DISK = 'public';
+
     public const DIRECTORY = 'task-photos';
 
     public static function isOwner(User $user, Task $task): bool
@@ -24,15 +24,21 @@ class TaskPhotoManager
 
     /**
      * Simpan foto-foto yang ada di request untuk task tertentu.
-     * Tidak melakukan apa-apa jika tidak ada file yang dikirim.
      */
-    public static function storeFromRequest(Request $request, Task $task, User $user): void
-    {
+    public static function storeFromRequest(
+        Request $request,
+        Task $task,
+        User $user,
+        ?string $submissionId = null,
+        ?string $revisionCycleId = null
+    ): void {
         if (! $request->hasFile('photos')) {
             return;
         }
 
-        abort_unless(self::isOwner($user, $task), 403);
+        if ($submissionId !== null) {
+            abort_unless(self::isOwner($user, $task), 403);
+        }
 
         foreach ($request->file('photos') as $file) {
             if (! $file || ! $file->isValid()) {
@@ -46,12 +52,14 @@ class TaskPhotoManager
                 'path' => $path,
                 'original_name' => $file->getClientOriginalName(),
                 'uploaded_by' => $user->id,
+                'submission_id' => $submissionId,
+                'id_revision_cycle' => $revisionCycleId,
             ]);
         }
     }
 
     /**
-     * Hapus satu foto (file fisik + record). Hanya pemilik task.
+     * @deprecated Foto bersifat read-only setelah diunggah.
      */
     public static function delete(TaskPhoto $photo, User $user): void
     {

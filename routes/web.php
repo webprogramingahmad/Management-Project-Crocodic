@@ -40,7 +40,13 @@ use App\Http\Controllers\Admin\Tasks\TransferProjectTaskController;
 use App\Http\Controllers\Admin\Tasks\TransferTaskController;
 use App\Http\Controllers\Admin\Tasks\UpdateProjectTaskController;
 use App\Http\Controllers\UpdateStatusTaskController;
+use App\Http\Controllers\StoreTaskOwnershipRequestController;
+use App\Http\Controllers\ApproveTaskOwnershipRequestController;
+use App\Http\Controllers\RejectTaskOwnershipRequestController;
+use App\Http\Controllers\DirectReassignTaskOwnershipController;
 use App\Http\Controllers\Tasks\DestroyTaskPhotoController;
+use App\Http\Controllers\Tasks\ShowTaskSubmissionsController;
+use App\Http\Controllers\Tasks\SubmitTaskToReviewController;
 use App\Http\Controllers\Admin\Tasks\UpdateTaskController;
 use App\Http\Controllers\Director\Administration\CreateAdministrationController as DirectorCreateAdministrationController;
 use App\Http\Controllers\Director\Administration\IndexAdministrationController as DirectorIndexAdministrationController;
@@ -149,15 +155,12 @@ Route::middleware(['auth', 'checkRole:executive', 'nocache'])->group(function ()
             Route::get('/{id}/task/task-create', CreateProjectTaskController::class)->name('executive.project.task.create');
             Route::post('/{id}/task/task-store', StoreProjectTaskController::class)->name('executive.project.task.store');
             Route::post('/{id}/task/task-transfer', TransferProjectTaskController::class)->name('executive.project.task.transfer');
-            Route::post('/{id}/task/task-update', UpdateProjectTaskController::class)->name('executive.project.task.update');
         });
 
         Route::prefix('/tasks')->group(function () {
             Route::get('', IndexTaskController::class)->name('executive.tasks.index');
-            Route::post('/task-store', StoreTaskController::class)->name('executive.task.store');
-            Route::post('/task-update', UpdateTaskController::class)->name('executive.task.update');
+            Route::get('/task-submissions/{id}', ShowTaskSubmissionsController::class)->name('executive.task.submissions');
             Route::post('/task-update-status/{id}', UpdateStatusTaskController::class)->name('executive.task.updateStatus');
-            Route::put('/task-update', UpdateTaskController::class)->name('executive.tasks.update');
             Route::post('/task/task-transfer', TransferTaskController::class)->name('executive.task.transfer');
         });
 
@@ -202,15 +205,15 @@ Route::middleware(['auth', 'checkRole:staff', 'nocache'])->group(function () {
             Route::get('', UserIndexProjectController::class)->name('staff.projects.index');
             Route::get('/{id}/tasks', UserIndexProjectTaskController::class)->name('staff.project.tasks.index');
             Route::post('/{id}/task/task-store', UserStoreProjectTaskController::class)->name('staff.project.task.store');
-            Route::post('/{id}/task/task-update', UserUpdateProjectTaskController::class)->name('staff.project.task.update');
         });
 
         Route::prefix('/tasks')->group(function () {
             Route::get('', UserIndexTaskController::class)->name('staff.tasks.index');
             Route::post('/task-store', UserStoreTaskController::class)->name('staff.task.store');
+            Route::post('/task-submit-review/{id}', SubmitTaskToReviewController::class)->name('staff.task.submitReview');
+            Route::get('/task-submissions/{id}', ShowTaskSubmissionsController::class)->name('staff.task.submissions');
             Route::post('/task-update-status/{id}', UpdateStatusTaskController::class)->name('staff.task.updateStatus');
-            Route::post('/task-update', UserUpdateTaskController::class)->name('staff.task.update');
-            Route::delete('/task-photo/{photo}', DestroyTaskPhotoController::class)->name('staff.task.photo.destroy');
+            Route::post('/task-ownership-request/{id}', StoreTaskOwnershipRequestController::class)->name('staff.task.ownership.request');
         });
 
         Route::get('/activity', IndexActivityController::class)->name('staff.activity.index');
@@ -247,17 +250,19 @@ Route::middleware(['auth', 'checkRole:director', 'nocache'])->group(function () 
             Route::get('/{id}/tasks', DirectorIndexProjectTaskController::class)->name('director.project.tasks.index');
             Route::post('/{id}/task/task-store', DirectorStoreProjectTaskController::class)->name('director.project.task.store');
             Route::post('/{id}/task/task-transfer', DirectorTransferProjectTaskController::class)->name('director.project.task.transfer');
-            Route::post('/{id}/task/task-update', DirectorUpdateProjectTaskController::class)->name('director.project.task.update');
         });
 
         Route::prefix('/tasks')->group(function () {
             Route::get('', DirectorIndexTaskController::class)->name('director.tasks.index');
             Route::post('/task-store', DirectorStoreTaskController::class)->name('director.task.store');
-            Route::post('/task-update', DirectorUpdateTaskController::class)->name('director.task.update');
+            Route::post('/task-submit-review/{id}', SubmitTaskToReviewController::class)->name('director.task.submitReview');
+            Route::get('/task-submissions/{id}', ShowTaskSubmissionsController::class)->name('director.task.submissions');
             Route::post('/task-review-decision/{id}', DirectorReviewTaskDecisionController::class)->name('director.task.reviewDecision');
             Route::post('/task-update-status/{id}', UpdateStatusTaskController::class)->name('director.task.updateStatus');
             Route::post('/task/task-transfer', DirectorTransferTaskController::class)->name('director.task.transfer');
-            Route::delete('/task-photo/{photo}', DestroyTaskPhotoController::class)->name('director.task.photo.destroy');
+            Route::post('/task-ownership-request/{id}/approve/{requestId}', ApproveTaskOwnershipRequestController::class)->name('director.task.ownership.approve');
+            Route::post('/task-ownership-request/{id}/reject/{requestId}', RejectTaskOwnershipRequestController::class)->name('director.task.ownership.reject');
+            Route::post('/task-ownership-reassign/{id}', DirectReassignTaskOwnershipController::class)->name('director.task.ownership.reassign');
         });
 
         Route::get('/activity', IndexActivityController::class)->name('director.activity.index');

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\User\Tasks;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\TaskDifficulty;
+use App\Support\TaskBoardReferenceData;
 use App\Support\TaskBucketQuery;
 use App\Support\TaskDateRangeFilter;
 use App\Support\TaskStatusCatalog;
@@ -19,9 +19,33 @@ class IndexProjectTaskController extends Controller
      */
     public function __invoke(Request $request, $id)
     {
-        $project = Project::with(['sdms', 'status'])->findOrFail($id);
+        $today = now()->toDateString();
+        $project = Project::with([
+            'status',
+            'sdms' => function ($q) use ($today) {
+                $q->select('users.id', 'users.name')
+                    ->with(['administrations' => function ($aq) use ($today) {
+                        $aq->select('id', 'id_user', 'end_date')
+                            ->whereDate('start_date', '<=', $today)
+                            ->whereDate('end_date', '>=', $today)
+                            ->whereHas('status', function ($sq) {
+                                $sq->where('name', 'accept');
+                            })
+                            ->orderByDesc('end_date');
+                    }]);
+            },
+        ])->findOrFail($id);
 
         abort_unless($project->sdms()->where('users.id', Auth::id())->exists(), 403);
+        $project->sdms->each(function ($sdm) {
+            $activeAdm = $sdm->administrations->first();
+            if (! $activeAdm || ! $activeAdm->end_date) {
+                return;
+            }
+            $returnDate = Carbon::parse($activeAdm->end_date)->addDay();
+            $sdm->is_absent_now = true;
+            $sdm->absent_returns_on_label = $returnDate->translatedFormat('j M');
+        });
 
         $projectAllowsTaskCreation = $project->allowsTaskCreation();
         $tasks = Task::with(['user', 'difficulty', 'status', 'project'])
@@ -55,9 +79,7 @@ class IndexProjectTaskController extends Controller
             'date_column' => 'tasks.updated_at',
         ]));
 
-        $difficulties = TaskDifficulty::oldest()
-            ->where('difficulty', '!=', 'Stand By')
-            ->get();
+        $difficulties = TaskBoardReferenceData::difficultiesForForms();
 
 
         $statusMap = TaskStatusCatalog::mapByClass();

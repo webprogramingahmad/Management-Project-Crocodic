@@ -30,7 +30,19 @@ class TaskPhoto extends Model
         'path',
         'original_name',
         'uploaded_by',
+        'submission_id',
+        'id_revision_cycle',
     ];
+
+    public function submission()
+    {
+        return $this->belongsTo(TaskSubmission::class, 'submission_id');
+    }
+
+    public function revisionCycle()
+    {
+        return $this->belongsTo(TaskRevisionCycle::class, 'id_revision_cycle');
+    }
 
     protected $appends = ['url'];
 

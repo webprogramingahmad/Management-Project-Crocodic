@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Director\Tasks;
 use App\Http\Controllers\Controller;
 use App\Models\Project;
 use App\Models\Task;
-use App\Models\TaskDifficulty;
+use App\Support\TaskBoardReferenceData;
 use App\Support\TaskBucketQuery;
 use App\Support\TaskDateRangeFilter;
 use App\Support\TaskStatusCatalog;
@@ -97,9 +97,7 @@ class IndexTaskController extends Controller
             'date_column' => 'tasks.updated_at',
         ]));
 
-        $difficulties = TaskDifficulty::oldest()
-            ->where('difficulty', '!=', 'Stand By')
-            ->get();
+        $difficulties = TaskBoardReferenceData::difficultiesForForms();
 
         $statusMap = TaskStatusCatalog::mapByClass();
         $statusTodo = $statusMap[TaskStatusCatalog::TODO];
