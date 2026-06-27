@@ -35,7 +35,7 @@ class EditProjectController extends Controller
         $difficulties = ProjectDifficulty::latest()->get();
         $directors = User::whereHas('role', fn($q) => $q->where('role', 'director'))->orderBy('name', 'asc')->get();
         $divisions = Division::with('users')->orderBy('divisi', 'asc')->get();
-        $users = User::select('id', 'name', 'id_divisi')->orderBy('name', 'asc')->get();
+        $users = User::select('id', 'name', 'id_divisi')->staffRole()->orderBy('name', 'asc')->get();
 
         return view('view.projects.edit', compact('project', 'difficulties', 'statusprojects', 'allowedStatusProjects', 'directors', 'divisions', 'users'));
     }

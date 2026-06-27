@@ -187,7 +187,7 @@
                                     class="profile-link">{{ Str::ucfirst($user->name) }}</a>
                             </td>
                             <td class="fw-semibold" style="width: 12%;">
-                                {{ Str::ucfirst($user->division?->divisi ?? '-') }}
+                                {{ \App\Support\AccountDisplay::divisionLabel($user) }}
                             </td>
                             <td class="fw-semibold" style="width: 23%;">{{ $user->email }}</td>
                             <td class="fw-semibold" style="width: 12%;">{{ \App\Support\RoleDisplay::label($user->role->role ?? null) }}

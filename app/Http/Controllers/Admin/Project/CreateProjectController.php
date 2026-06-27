@@ -23,7 +23,7 @@ class CreateProjectController extends Controller
         })->orderBy('name', 'asc')->get();
         $difficulties = ProjectDifficulty::latest()->get();
         $divisions = Division::orderBy('divisi', 'asc')->get();
-        $users = User::select('id', 'name', 'id_divisi')->orderBy('name', 'asc')->get();
+        $users = User::select('id', 'name', 'id_divisi')->staffRole()->orderBy('name', 'asc')->get();
 
         $workloadIds = $directors->pluck('id')->merge($users->pluck('id'))->unique()->values()->all();
         $workloadByUserId = ProjectWorkload::statsMapForUserIds($workloadIds);

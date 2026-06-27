@@ -24,3 +24,4 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/scripts/load-test/k6/data/staff-accounts.json

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\EnsureDailySdmOperationalReset;
 use App\Http\Middleware\NoCacheHeaders;
 use Illuminate\Foundation\Application;
 use App\Http\Middleware\AdminMiddleware;
@@ -21,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'checkRole' => CheckRole::class,
             'nocache' => NoCacheHeaders::class,
         ]);
+
+        $middleware->appendToGroup('web', EnsureDailySdmOperationalReset::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

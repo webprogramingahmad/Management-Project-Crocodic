@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User\Tasks;
 
 use App\Http\Controllers\Controller;
 use App\Models\Project;
+use App\Support\StaffTaskBoardProjectsQuery;
 use App\Support\TaskBoardReferenceData;
 use App\Support\TaskBucketQuery;
 use App\Support\TaskDateRangeFilter;
@@ -19,24 +20,9 @@ class IndexTaskController extends Controller
     public function __invoke(Request $request)
     {
         $today = now()->toDateString();
+        $userId = (string) Auth::id();
 
-        $projects = Project::whereHas('sdms', function ($q) {
-            $q->where('users.id', Auth::id());
-        })->with([
-            'status',
-            'sdms' => function ($q) use ($today) {
-                $q->select('users.id', 'users.name')
-                    ->with(['administrations' => function ($aq) use ($today) {
-                        $aq->select('id', 'id_user', 'end_date')
-                            ->whereDate('start_date', '<=', $today)
-                            ->whereDate('end_date', '>=', $today)
-                            ->whereHas('status', function ($sq) {
-                                $sq->where('name', 'accept');
-                            })
-                            ->orderByDesc('end_date');
-                    }]);
-            },
-        ])->orderBy('name', 'asc')->get();
+        $projects = StaffTaskBoardProjectsQuery::forUser($userId, $today);
 
         TaskBoardReferenceData::decorateProjectsWithAbsentLabels($projects);
 
@@ -54,7 +40,7 @@ class IndexTaskController extends Controller
         ];
 
         $boardColumns = TaskBucketQuery::forUserBoardColumns(
-            Auth::id(),
+            $userId,
             $bucketFilters,
             $bucketDateFilters
         );

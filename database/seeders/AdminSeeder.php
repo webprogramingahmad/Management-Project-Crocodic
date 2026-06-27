@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Division;
 use App\Models\LastGraduate;
-use App\Models\PendidikanTerakhir;
 use App\Models\Role;
 use App\Models\Statussdm;
 use App\Models\User;
@@ -21,7 +19,6 @@ class AdminSeeder extends Seeder
 
     public function run(): void
     {
-        $divisi = Division::where('divisi', 'Tester')->first();
         $role = Role::where('role', 'executive')->first();
         $status = Statussdm::where('status_sdm', 'Tetap')->first();
         $notReady = Statussdm::where('status_sdm', 'Not Ready')->first();
@@ -38,7 +35,7 @@ class AdminSeeder extends Seeder
             'no_telp' => '022134242438',
             'alamat' => 'Jl. Bima Remaja No.6, Srondol Wetan, Kec. Banyumanik, Kota Semarang, Jawa Tengah 50363',
             'id_graduate' => $graduate->id,
-            'id_divisi' => $divisi->id,
+            'id_divisi' => null,
             'id_role' => $role->id,
             'id_status_sdm' => $status->id,
             'id_activity_status_sdm' => $notReady->id,

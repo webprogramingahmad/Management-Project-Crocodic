@@ -17,7 +17,7 @@ class IndexAdminController extends Controller
         $query = User::with(['division', 'role'])
             ->filter($filters)
             ->when($divisionId, function ($q) use ($divisionId) {
-                $q->where('id_divisi', $divisionId);
+                $q->staffRole()->where('id_divisi', $divisionId);
             })
             ->orderBy('name', 'asc')
             ->get();

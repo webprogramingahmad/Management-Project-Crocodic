@@ -112,6 +112,20 @@ class User extends Authenticatable
         }
     }
 
+    public function scopeStaffRole(Builder $query): Builder
+    {
+        return $query->whereHas('role', function (Builder $q) {
+            $q->where('role', 'staff');
+        });
+    }
+
+    public function usesOperationalDivision(): bool
+    {
+        $this->loadMissing('role');
+
+        return strtolower((string) ($this->role?->role ?? '')) === 'staff';
+    }
+
     public function projects()
     {
         return $this->belongsToMany(Project::class, 'project_user', 'user_id', 'project_id');

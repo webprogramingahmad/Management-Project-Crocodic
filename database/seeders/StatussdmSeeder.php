@@ -16,10 +16,10 @@ class StatussdmSeeder extends Seeder
         $status_sdm = ['Tetap', 'Kontrak', 'Magang', 'Ready', 'Stand By', 'Not Ready', 'Absent'];
 
         foreach ($status_sdm as $status) {
-            Statussdm::create([
-                'id' => \Illuminate\Support\Str::uuid(),
-                'status_sdm' => $status
-            ]);
+            Statussdm::firstOrCreate(
+                ['status_sdm' => $status],
+                ['id' => \Illuminate\Support\Str::uuid()]
+            );
         }
     }
 }

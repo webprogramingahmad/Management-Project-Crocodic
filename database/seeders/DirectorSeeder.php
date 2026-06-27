@@ -2,9 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Division;
 use App\Models\LastGraduate;
-use App\Models\PendidikanTerakhir;
 use App\Models\Role;
 use App\Models\Statussdm;
 use App\Models\User;
@@ -18,21 +16,18 @@ class DirectorSeeder extends Seeder
      */
     public function run(): void
     {
-        $divisiIDs = Division::pluck('id')->toArray();
         $role = Role::where('role', 'director')->first();
         $employmentIds = Statussdm::employmentTypeIds();
-        $activityIds = Statussdm::activityStatusIds();
+        $notReady = Statussdm::firstOrCreate(['status_sdm' => 'Not Ready']);
         $graduateIDs = LastGraduate::pluck('id')->toArray();
 
-        User::factory(10)->make()->each(function ($user) use ($divisiIDs, $employmentIds, $activityIds, $role, $graduateIDs) {
-            $user->id_divisi = fake()->randomElement($divisiIDs);
+        User::factory(10)->make()->each(function ($user) use ($employmentIds, $notReady, $role, $graduateIDs) {
+            $user->id_divisi = null;
             $user->id_role = $role?->id;
             $user->id_status_sdm = $employmentIds !== [] && fake()->boolean(60)
                 ? fake()->randomElement($employmentIds)
                 : null;
-            $user->id_activity_status_sdm = $activityIds !== []
-                ? fake()->randomElement($activityIds)
-                : null;
+            $user->id_activity_status_sdm = $notReady->id;
             $user->id_graduate = fake()->randomElement($graduateIDs);
             $user->save();
         });
