@@ -40,7 +40,7 @@ if /I "%SCRIPT%"=="login" (
     set "K6_SCRIPT=k6\staff-readonly-multi.js"
     echo [k6] Login staff multi-akun + GET dashboard/tasks - read-only
     echo Export akun staff dari database...
-    php "%~dp0export-staff-accounts.php" --limit=%VUS%
+    call php "%~dp0export-staff-accounts.php" --limit=%VUS%
     if errorlevel 1 (
         echo Gagal export akun staff. Pastikan MySQL aktif dan ada user staff.
         exit /b 1
@@ -54,12 +54,22 @@ if not "%EMAIL%"=="" echo EMAIL=%EMAIL%
 echo.
 
 set "ENV_ARGS=--env VUS=%VUS% --env DURATION=%DURATION% --env BASE_URL=%BASE_URL%"
-if /I "%SCRIPT%"=="staff-multi" set "ENV_ARGS=!ENV_ARGS! --env ACCOUNTS_FILE=k6/data/staff-accounts.json"
+if /I "%SCRIPT%"=="staff-multi" set "ENV_ARGS=!ENV_ARGS! --env ACCOUNTS_FILE=data/staff-accounts.json"
 if not "%EMAIL%"=="" set "ENV_ARGS=!ENV_ARGS! --env EMAIL=%EMAIL%"
 if not "%PASSWORD%"=="" set "ENV_ARGS=!ENV_ARGS! --env PASSWORD=%PASSWORD%"
 
+echo.
+echo Menjalankan k6 ^(tunggu ~2-3 menit untuk 50 VU^)...
+echo.
+
 "%K6%" run !ENV_ARGS! "%K6_SCRIPT%"
-exit /b %ERRORLEVEL%
+set "K6_EXIT=%ERRORLEVEL%"
+if not "%K6_EXIT%"=="0" (
+    echo.
+    echo k6 gagal. Exit code: %K6_EXIT%
+    echo Periksa: Apache/MySQL/Memurai aktif, password staff = password
+)
+exit /b %K6_EXIT%
 
 :help
 echo.
