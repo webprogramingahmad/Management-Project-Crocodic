@@ -1,3 +1,6 @@
+<h1>Project Management System — PT Taman Media Indonesia</h1>
+<h3>Mengembangkan aplikasi manajemen project berbasis web untuk membantu pemantauan status project, pengelolaan tugas, dan pengelolaan sumber daya manusia. Aplikasi dilengkapi dashboard serta fitur administrasi untuk mendukung pemantauan pekerjaan tim.</h3>
+
 <h1>Cara Menjalankan Project Ini</h1>
 <h2>📋 Prasyarat</h2>
 <ul>
